@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>今天这一天 · 初二人生模拟器</title>
+<style>
+  :root{
+    --paper:#F0E4CE; --paper2:#FCF6EA; --ink:#1C1814; --ink2:#463C32; --soft:#8C7F6C;
+    --red:#D23F28; --blue:#2F5D8C; --gold:#DDA02B; --green:#4B8A55; --purple:#7A5CA6;
+    --line:#1C1814;
+    --hudH:104px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{background:var(--paper)}
+  body{
+    background:var(--paper);
+    background-image:radial-gradient(rgba(28,24,20,.06) 1px, transparent 1px);
+    background-size:5px 5px;
+    color:var(--ink);min-height:100vh;
+    font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit}
+
+  /* ====== 固定 HUD（状态条永远在最上，不被任何东西盖住） ====== */
+  .hud{
+    position:fixed;top:0;left:0;right:0;z-index:100;touch-action:manipulation;
+    background:var(--ink);color:var(--paper2);
+    box-shadow:0 3px 0 rgba(0,0,0,.25), 0 6px 22px rgba(28,24,20,.22);
+  }
+  .hud-row1{
+    display:flex;align-items:center;gap:10px;
+    padding:8px 14px 6px;
+  }
+  .hb-title{font-size:14px;font-weight:900;letter-spacing:2.5px;white-space:nowrap}
+  .hb-title span{display:block;font-size:9.5px;font-weight:400;letter-spacing:.5px;opacity:.55;margin-top:1px}
+  .hb-progress{flex:1;display:flex;align-items:center;gap:3px;min-width:0}
+  .pb{height:5px;flex:1;max-width:16px;background:rgba(252,246,234,.2);border-radius:3px;transition:background .3s}
+  .pb.done{background:var(--gold)}
+  .pb.now{background:#fff;box-shadow:0 0 0 2px rgba(221,160,43,.5)}
+  .hb-clock{
+    background:var(--gold);color:var(--ink);font-weight:900;font-size:13px;
+    padding:3px 11px;border-radius:14px;letter-spacing:1px;flex:none;
+  }
+  .hb-btn{
+    background:transparent;border:1px solid rgba(252,246,234,.32);color:var(--paper2);
+    font-size:11px;padding:4px 9px;border-radius:13px;cursor:pointer;flex:none;
+    min-width:34px;min-height:26px;line-height:1;
+  }
+  .hb-menu{font-size:17px;font-weight:900;letter-spacing:0;padding:2px 8px 5px;min-width:36px;min-height:30px}
+  .hb-menu:hover{background:rgba(252,246,234,.2)}
+  .hb-btn:hover{background:rgba(252,246,234,.14)}
+
+  .hud-row2{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:1px;
+    background:rgba(252,246,234,.16);
+    border-top:1px solid rgba(252,246,234,.16);
+  }
+  .hstat{
+    background:var(--ink);border:none;cursor:pointer;text-align:left;
+    padding:6px 8px 7px;color:var(--paper2);position:relative;overflow:hidden;
+    transition:background .15s;
+  }
+  .hstat:hover{background:#2A231C}
+  .hstat.flash{animation:hflash .85s ease}
+  @keyframes hflash{0%{background:rgba(221,160,43,.5)}100%{background:var(--ink)}}
+  .hs-top{display:flex;align-items:baseline;gap:2px;font-size:10px;opacity:.8;margin-bottom:3px;white-space:nowrap}
+  .hs-top .nm{flex:0 0 auto;font-weight:700}
+  .hs-top .ico{font-size:11px;opacity:1}
+  .hs-top .vl{margin-left:auto;font-size:13px;font-weight:900;opacity:1;letter-spacing:-.3px;padding-left:2px}
+  .hs-bar{height:5px;background:rgba(252,246,234,.17);border-radius:3px;overflow:hidden}
+  .hs-bar>i{display:block;height:100%;border-radius:3px;transition:width .6s cubic-bezier(.3,1.2,.4,1)}
+  .hs-delta{
+    position:absolute;right:6px;top:20px;font-size:11px;font-weight:900;
+    animation:rise 1.3s ease-out forwards;pointer-events:none;
+  }
+  @keyframes rise{0%{opacity:0;transform:translateY(6px)}25%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-9px)}}
+
+  /* ====== 主体：padding-top 精确等于 HUD 高度 ====== */
+  .stage{padding:calc(var(--hudH) + 14px) 12px 46px;max-width:900px;margin:0 auto}
+  .stage.on{padding-bottom:70px}
+
+  /* ====== 漫画分镜 ====== */
+  .panel{
+    background:var(--paper2);border:3px solid var(--line);border-radius:5px;overflow:hidden;
+    box-shadow:5px 5px 0 rgba(28,24,20,.15);
+  }
+  .frame{
+    position:relative;width:100%;height:280px;overflow:hidden;
+    border-bottom:3px solid var(--line);background:#DED2BB;cursor:pointer;
+  }
+  .frame svg.bg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .frame-idx{
+    position:absolute;top:0;left:0;z-index:5;background:var(--ink);color:var(--paper2);
+    font-size:11px;font-weight:800;padding:4px 10px;letter-spacing:1.5px;border-radius:0 0 5px 0;
+  }
+  .frame-place{
+    position:absolute;bottom:0;left:0;z-index:5;background:rgba(28,24,20,.82);color:var(--paper2);
+    font-size:10.5px;padding:3px 10px;letter-spacing:1px;border-radius:0 5px 0 0;
+  }
+  .frame-cast{display:none;position:absolute;top:34px;left:8px;z-index:6;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-start;max-width:70%}
+  .ctag{
+    font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;
+    border:1.5px solid var(--line);background:var(--paper2);color:var(--ink);
+  }
+  .ctag.pos{background:var(--green);color:#fff}
+  .ctag.neg{background:var(--red);color:#fff}
+  .ctag.self{background:var(--ink);color:var(--paper2)}
+
+  /* 分镜里的人物立绘 */
+  .cast-stage{position:absolute;left:0;right:0;bottom:0;z-index:3;height:96%;pointer-events:none;
+    display:flex;align-items:flex-end;justify-content:center;gap:3%;padding:0 4% 20px}
+  .fig{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    animation:figin .42s cubic-bezier(.2,1.2,.4,1) both}
+  @keyframes figin{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+  .fig svg{display:block;width:auto;height:100%;max-height:100%;
+    filter:drop-shadow(3px 3px 0 rgba(28,24,20,.16))}
+  .fig .shadow{
+    width:calc(100% - 12px);height:7px;border-radius:50%;
+    background:radial-gradient(ellipse,rgba(28,24,20,.26),transparent 70%);margin-top:-4px;
+  }
+  .fig .nm{
+    order:9;position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+    font-size:9.5px;font-weight:800;background:var(--ink);color:var(--paper2);
+    padding:1.5px 8px;border-radius:9px;white-space:nowrap;letter-spacing:.5px;
+    box-shadow:1.5px 1.5px 0 rgba(28,24,20,.25);z-index:6;
+  }
+  .fig .nm.neg{background:var(--red)}
+  .fig .nm.pos{background:var(--green)}
+  .fig.me{order:-1}
+  .fig .bub{
+    position:absolute;top:-14px;right:-8px;z-index:4;
+    background:#fff;border:2.5px solid var(--line);border-radius:50%;
+    width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+    font-size:17px;box-shadow:2px 2px 0 rgba(28,24,20,.18);
+    animation:bubble 1.8s ease-in-out infinite;
+  }
+  @keyframes bubble{50%{transform:translateY(-4px)}}
+  .fig .figbody{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;min-height:0}
+  .fig .figbody>svg{height:100%;width:auto}
+  .fig.big{width:20%}
+  .fig.mid{width:15%}
+  .fig.sm{width:11.5%}
+  .fig.xs{width:9%}
+  .frame::after{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(45deg,rgba(0,0,0,.022) 0 2px,transparent 2px 5px);
+  }
+
+  /* 旁白 */
+  .narr{
+    margin:13px 14px 0;padding:11px 14px;
+    border-left:4px solid var(--gold);background:#FFF8E9;
+    font-size:14.5px;line-height:1.9;color:var(--ink2);
+  }
+  .narr em{font-style:normal;color:var(--red);font-weight:800}
+  .narr:empty{display:none}
+
+  /* 对话气泡 */
+  .dlg{margin:14px 14px 0}
+  .dlg-head{
+    display:inline-flex;align-items:center;gap:6px;background:var(--ink);color:var(--paper2);
+    font-size:12.5px;font-weight:800;padding:4px 13px 4px 9px;border-radius:4px 4px 0 0;letter-spacing:1px;
+  }
+  .dlg-head .face{width:22px;height:22px;border-radius:50%;overflow:hidden;display:block;flex:none;background:#fff;border:1.5px solid var(--line)}
+  .dlg-body{
+    background:#fff;border:3px solid var(--line);border-top:none;border-radius:0 4px 4px 4px;
+    padding:13px 16px;font-size:16.5px;line-height:1.85;min-height:62px;white-space:pre-wrap;
+    box-shadow:3px 3px 0 rgba(28,24,20,.1);letter-spacing:.3px;
+  }
+  .dlg-body:empty,.dlg[style*="display: none"]{display:none}
+  .caret{display:inline-block;width:9px;height:17px;background:var(--ink);vertical-align:-3px;animation:blink .65s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* 继续按钮 */
+  .continue{
+    display:none;margin:10px 14px 0;width:calc(100% - 28px);
+    background:var(--ink);color:var(--paper2);border:none;border-radius:5px;
+    padding:10px;font-size:13.5px;font-weight:800;letter-spacing:2px;cursor:pointer;
+    box-shadow:3px 3px 0 rgba(28,24,20,.2);
+  }
+  .continue.show{display:block}
+  .continue:hover{background:#2E251D}
+
+  /* 选择 */
+  .choices{margin:13px 14px 14px;display:flex;flex-direction:column;gap:9px;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;pointer-events:none}
+  .choices.on{opacity:1;transform:none;pointer-events:auto}
+  .choice{
+    position:relative;text-align:left;width:100%;
+    background:var(--paper2);border:2.5px solid var(--line);border-radius:5px;
+    padding:11px 14px 11px 44px;cursor:pointer;font-size:15.5px;color:var(--ink);
+    box-shadow:3px 3px 0 rgba(28,24,20,.13);transition:transform .1s,box-shadow .1s,background .15s;
+  }
+  .choice::before{
+    content:attr(data-k);position:absolute;left:11px;top:50%;transform:translateY(-50%);
+    width:22px;height:22px;border:2px solid var(--line);border-radius:50%;background:var(--gold);
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;
+  }
+  .choice b{display:block;font-weight:700;line-height:1.5}
+  .choice small{display:block;font-size:12px;color:var(--soft);margin-top:3px;font-style:italic;font-weight:400}
+  .choice:hover{transform:translate(-1px,-2px);box-shadow:5px 5px 0 rgba(28,24,20,.2);background:#fff}
+  .choice:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(28,24,20,.15)}
+
+  /* 变化提示卡 */
+  .deltawrap{min-height:0}
+  .deltacard{
+    margin:12px 14px 0;border:2.5px solid var(--line);border-radius:5px;background:#FFF8E9;
+    padding:11px 14px;opacity:0;transform:translateY(-6px);transition:.4s;
+  }
+  .deltacard.on{opacity:1;transform:none}
+  .deltacard .dh{font-size:10px;letter-spacing:2px;color:var(--soft);font-weight:800;margin-bottom:5px}
+  .deltacard .dp{font-size:14.5px;font-weight:700;margin-bottom:7px;line-height:1.5}
+  .deltacard .dd{display:flex;flex-wrap:wrap;gap:5px}
+  .deltacard .dl{font-size:11.5px;font-weight:800;padding:2px 9px;border-radius:11px;border:1.5px solid var(--line);background:#fff}
+  .deltacard .dl.up{color:var(--green)} .deltacard .dl.dn{color:var(--red)}
+
+  /* 关系墙 */
+  .wall{margin:14px 14px 0;border:2.5px solid var(--line);border-radius:5px;background:#fff;padding:11px 13px}
+  .wall-h{font-size:11px;font-weight:800;letter-spacing:2.5px;color:var(--soft);margin-bottom:9px;display:flex;align-items:center;gap:7px}
+  .wall-h::after{content:'';flex:1;height:1.5px;background:repeating-linear-gradient(90deg,var(--line) 0 5px,transparent 5px 9px);opacity:.3}
+  .wall-list{display:flex;flex-wrap:wrap;gap:6px}
+  .wnone{font-size:12px;color:var(--soft)}
+  .wrow{
+    display:flex;align-items:center;gap:6px;padding:3px 9px 3px 3px;
+    border:1.5px solid var(--line);border-radius:18px;background:var(--paper);
+    font-size:12px;font-weight:700;cursor:pointer;
+  }
+  .wrow:hover{background:#fff}
+  .wrow .av{width:24px;height:24px;border-radius:50%;overflow:hidden;flex:none;border:1.5px solid var(--line);background:#fff;display:block}
+  .wrow .meter{width:34px;height:5px;background:#E3D8C2;border-radius:3px;overflow:hidden;display:block}
+  .wrow .meter>i{display:block;height:100%;transition:width .5s}
+  .wrow.good .meter>i{background:var(--green)} .wrow.bad .meter>i{background:var(--red)}
+  .wrow .lv{font-size:10px;color:var(--soft);font-weight:700}
+  .wrow .wsign{font-size:10px;font-weight:900;color:var(--soft);min-width:20px;text-align:right}
+  .wrow.good .wsign{color:var(--green)} .wrow.bad .wsign{color:var(--red)}
+
+  /* 日志 */
+  .journal{margin:14px 14px 0;border:2.5px solid var(--line);border-radius:5px;background:#fff;overflow:hidden}
+  .journal-h{
+    background:var(--line);color:var(--paper2);font-size:11px;font-weight:800;letter-spacing:2px;
+    padding:7px 13px;display:flex;align-items:center;gap:7px;cursor:pointer;
+  }
+  .journal-body{max-height:250px;overflow-y:auto;padding:10px 13px}
+  .journal-body::-webkit-scrollbar{width:6px}
+  .journal-body::-webkit-scrollbar-thumb{background:#C9BCA2;border-radius:3px}
+  .jl{display:flex;gap:9px;padding:4px 0;border-bottom:1px dashed #E7DCC8}
+  .jl:last-child{border-bottom:none}
+  .jl .tm{color:var(--soft);font-size:11px;flex:none;width:38px;padding-top:3px;font-weight:800}
+  .jl .tx{flex:1;font-size:13.5px;line-height:1.85;color:var(--ink2)}
+  .jl .tx b.pos{color:var(--green)} .jl .tx b.neg{color:var(--red)}
+  .jtrace{display:flex;flex-direction:column;gap:6px}
+  .jt{display:flex;gap:9px;font-size:13px;line-height:1.6;align-items:flex-start}
+  .jt-t{color:var(--soft);font-size:11px;font-weight:800;flex:none;width:38px;padding-top:2px}
+  .jt-p{flex:1}
+
+  /* ====== 浮层 sheet ====== */
+  .sheet{
+    position:fixed;inset:0;z-index:200;background:var(--paper);
+    background-image:radial-gradient(rgba(28,24,20,.06) 1px,transparent 1px);background-size:5px 5px;
+    opacity:0;transition:opacity .28s;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  }
+  .sheet.on{opacity:1}
+  .sheet-scroll{max-width:600px;margin:0 auto;padding:34px 18px 60px}
+  .sheet-stat .sheet-scroll,.sheet-rel .sheet-scroll{padding-top:26px}
+
+  .intro-mark{
+    width:70px;height:70px;margin:0 auto 14px;border:3px solid var(--line);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--gold);
+  }
+  .sc-kicker{text-align:center;font-size:10.5px;letter-spacing:4.5px;color:var(--soft);font-weight:800}
+  .sc-title{text-align:center;font-size:32px;font-weight:900;letter-spacing:2px;margin-top:6px;line-height:1.3}
+  .sc-title.sm{font-size:25px}
+  .sc-sub{text-align:center;font-size:12px;color:var(--soft);margin-top:8px;letter-spacing:.5px}
+  .sc-rule{width:64px;height:4px;background:var(--red);margin:15px auto 18px;border-radius:2px}
+  .sc-card{
+    background:var(--paper2);border:3px solid var(--line);border-radius:5px;padding:15px 17px;margin-bottom:12px;
+    box-shadow:4px 4px 0 rgba(28,24,20,.13);
+  }
+  .sc-card h3{
+    font-size:11px;letter-spacing:3px;color:var(--soft);margin-bottom:10px;font-weight:800;
+    display:flex;align-items:center;gap:7px;
+  }
+  .sc-card h3::after{content:'';flex:1;height:1.5px;background:repeating-linear-gradient(90deg,var(--line) 0 5px,transparent 5px 9px);opacity:.28}
+  .sc-card p{font-size:14.5px;line-height:1.95;color:var(--ink2)}
+  .sc-card p b{color:var(--ink)}
+  .sc-card p em{font-style:normal;color:var(--red);font-weight:800}
+  .sc-card-dark{background:var(--ink);border-color:var(--ink);color:var(--paper2)}
+  .sc-card-dark h3{color:#A2947F}
+  .sc-card-dark h3::after{background:repeating-linear-gradient(90deg,#A2947F 0 5px,transparent 5px 9px)}
+  .sc-card-dark p{color:#EFE6D8}
+  .sc-card-dark p b{color:var(--gold)}
+  .sc-card-dark .dim{color:#9C8F7B;font-size:13px}
+  .sc-card-dark em{font-style:normal;color:var(--gold);font-weight:800}
+
+  .stat-legend{display:flex;flex-direction:column;gap:8px}
+  .sl{display:flex;align-items:center;gap:8px;font-size:13.5px}
+  .sl-i{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid var(--line);flex:none}
+  .sl b{min-width:34px}
+  .sl span:last-child{color:var(--soft);font-size:12.5px}
+
+  .btn-big{
+    display:block;width:100%;border:3px solid var(--line);background:var(--red);color:#fff;
+    font-size:17px;font-weight:800;padding:13px;border-radius:5px;cursor:pointer;
+    letter-spacing:2px;box-shadow:4px 4px 0 rgba(28,24,20,.2);margin-top:6px;
+  }
+  .btn-big:hover{filter:brightness(1.07)}
+  .btn-big.alt{background:var(--paper2);color:var(--ink);margin-top:12px}
+  .btn-big.alt:hover{background:#fff}
+  .fine{text-align:center;font-size:11px;color:var(--soft);margin-top:14px;line-height:1.9}
+
+  .verdict{font-size:17px;line-height:1.95;color:var(--ink);font-weight:600}
+
+  /* 结算条 */
+  .ebars{display:flex;flex-direction:column;gap:8px}
+  .ebar{
+    display:flex;align-items:center;gap:9px;background:none;border:none;padding:3px 2px;cursor:pointer;text-align:left;width:100%;
+  }
+  .ebar:hover{background:#fff}
+  .en{font-size:12.5px;font-weight:800;width:56px;flex:none}
+  .etrack{flex:1;height:13px;background:#E3D8C2;border-radius:6px;overflow:hidden;position:relative;border:1.5px solid var(--line)}
+  .etrack>i{display:block;height:100%;transition:width 1s cubic-bezier(.3,1.2,.4,1)}
+  .ev{font-size:13px;font-weight:900;width:28px;text-align:right;flex:none}
+  .ev.low{color:var(--red)}
+  .tiny{font-size:11px;color:var(--soft);margin-top:9px;text-align:center}
+
+  .resume{margin:-4px 0 14px;border:3px solid var(--line);border-radius:5px;background:#FFF8E9;padding:13px 15px;box-shadow:4px 4px 0 rgba(28,24,20,.13)}
+  .rs-t{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--soft);margin-bottom:5px}
+  .rs-b{font-size:14.5px;font-weight:700;margin-bottom:11px}
+  .btn-sm{display:block;width:100%;background:none;border:none;color:var(--soft);font-size:12px;margin-top:9px;cursor:pointer;text-decoration:underline;font-family:inherit}
+  .btn-sm:hover{color:var(--red)}
+  .opening{display:flex;align-items:center;gap:13px;padding:9px 0;border-bottom:1.5px dashed #E0D5C0}
+  .opening:last-child{border-bottom:none}
+  .op-n{font-size:34px;font-weight:900;line-height:1;min-width:52px;text-align:center;
+    color:var(--soft);border:3px solid var(--line);border-radius:8px;padding:5px 6px;background:var(--paper)}
+  .op-n.good{color:#fff;background:var(--green);border-color:var(--ink)}
+  .op-n.bad{color:#fff;background:var(--red);border-color:var(--ink)}
+  .op-l{font-size:14px;font-weight:700;line-height:1.5}
+  .op-l span{font-size:12px;color:var(--soft);font-weight:400}
+  .cos{display:flex;flex-direction:column}
+  .co{display:flex;gap:11px;align-items:center;background:none;border:none;padding:9px 2px;border-bottom:1.5px dashed #E0D5C0;cursor:pointer;text-align:left;width:100%}
+  .co:last-child{border-bottom:none}
+  .co:hover{background:#fff}
+  .co-av{width:46px;height:46px;border-radius:50%;overflow:hidden;flex:none;border:2px solid var(--line);background:#fff;display:block}
+  .co-main{flex:1;min-width:0}
+  .co-name{font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .co-name em{font-style:normal;font-size:10px;padding:1px 7px;border-radius:9px;font-weight:800}
+  .co-name em.g{background:var(--green);color:#fff}
+  .co-name em.r{background:var(--red);color:#fff}
+  .co-name em.y{background:var(--gold);color:#fff}
+  .co-txt{font-size:12.5px;color:var(--soft);margin-top:2px}
+
+  /* 属性说明 */
+  .sdesc-top{text-align:center;color:#fff;padding:22px 0 20px;margin:-34px -18px 18px;border-bottom:3px solid var(--line)}
+  .sdesc-ico{font-size:38px}
+  .sdesc-num{font-size:52px;font-weight:900;line-height:1;margin:4px 0}
+  .sdesc-num small{font-size:16px;opacity:.7;font-weight:700}
+  .sdesc-name{font-size:15px;font-weight:800;letter-spacing:3px}
+  .sdesc-state{display:inline-block;margin-top:10px;font-size:11px;font-weight:800;padding:3px 13px;border-radius:12px;color:#fff}
+
+  /* 关系详情 */
+  .rel-top{text-align:center;padding:8px 0 20px;border-bottom:3px solid var(--line);margin-bottom:18px}
+  .rel-av{width:92px;height:92px;margin:0 auto;border-radius:50%;overflow:hidden;border:3px solid var(--line);background:#fff;display:block}
+  .rel-n{font-size:24px;font-weight:900;margin-top:9px}
+  .rel-tag{font-size:11px;color:var(--soft);font-weight:800;letter-spacing:2px;margin-top:2px}
+  .rel-meter{height:12px;background:#E3D8C2;border-radius:6px;overflow:hidden;margin:16px auto 8px;max-width:290px;border:2px solid var(--line)}
+  .rel-meter>i{display:block;height:100%;transition:width .9s}
+  .rel-v{font-size:14px;font-weight:800}
+  .rel-v span{display:block;font-size:12.5px;color:var(--soft);font-weight:400;margin-top:3px}
+  .end-stamp{text-align:center;display:inline-block;background:var(--ink);color:var(--paper2);font-size:10px;font-weight:800;letter-spacing:3px;padding:4px 13px;border-radius:3px;margin-bottom:6px}
+
+  @media(max-width:620px){
+    .hud-row1{padding:7px 10px 5px;gap:7px}
+    .hb-title{font-size:12px;letter-spacing:1.5px}
+    .hb-title span{font-size:9px}
+    .hb-clock{font-size:11.5px;padding:2px 8px}
+    .hb-btn{font-size:10px;padding:3px 7px}
+    .hstat{padding:5px 6px 6px}
+    .hs-top{font-size:9px}
+    .hs-top .vl{font-size:11.5px}
+    .stage{padding:calc(var(--hudH) + 10px) 8px 40px}
+    .frame{height:230px}
+    .dlg-body{font-size:15.5px;padding:11px 13px}
+    .choice{font-size:14.5px;padding:10px 12px 10px 40px}
+    .sc-title{font-size:26px}
+    .sc-title.sm{font-size:21px}
+    .sheet-scroll{padding:26px 14px 50px}
+    .sdesc-top{margin:-26px -14px 16px}
+  }
+
+  .choice .fx{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;padding-top:7px;border-top:1.5px dashed #E0D5C0}
+  .choice .fx i{font-style:normal;font-size:10.5px;font-weight:800;padding:1.5px 7px;border-radius:9px;border:1.5px solid var(--line);background:#fff;letter-spacing:.3px}
+  .choice .fx i.up{color:var(--green);background:#EEF6EE}
+  .choice .fx i.dn{color:var(--red);background:#FCEFEC}
+  .choice .fx i.rp{color:var(--purple);background:#F3EFFA}
+  .choice .fx i.rn{color:var(--ink2);background:#F0EADC}
+</style>
+</head>
+<body>
+
+<!-- ========== 固定 HUD ========== -->
+<header class="hud" id="hud">
+  <div class="hud-row1">
+    <div class="hb-title">今天这一天<span>初二(3)班 · 人生模拟器</span></div>
+    <div class="hb-progress" id="hb-progress"></div>
+    <div class="hb-clock" id="clock">06:30</div>
+    <button class="hb-btn hb-menu" onclick="askRestart()" title="菜单" aria-label="菜单">⋯</button>
+  </div>
+  <div class="hud-row2" id="hud-stats"></div>
+</header>
+
+<!-- ========== 主体 ========== -->
+<main class="stage" id="stage">
+  <div class="panel">
+    <div class="frame" id="frame" onclick="advance()">
+      <div class="frame-idx" id="pidx">01 / 14</div>
+      <div class="frame-place" id="fplace"></div>
+      <div class="frame-cast" id="casttag"></div>
+      <div id="bg"></div>
+    </div>
+    <div class="narr" id="narr"></div>
+    <div class="dlg" id="dlg">
+      <div class="dlg-head"><span class="face" id="dlg-face"></span><span id="dlg-name">旁白</span></div>
+      <div class="dlg-body" id="dlg-body"></div>
+    </div>
+    <button class="continue" id="continueBtn" onclick="advance()">▼ 继续</button>
+    <div class="deltawrap" id="delta"></div>
+    <div class="choices" id="choices"></div>
+    <div class="wall">
+      <div class="wall-h">今天围绕我的人 · 点一下看他</div>
+      <div class="wall-list" id="wall-list"></div>
+    </div>
+    <div class="journal">
+      <div class="journal-h" onclick="toggleJ()">📔 今天的记录 <span id="jarrow" style="margin-left:auto">▸</span></div>
+      <div class="journal-body" id="journal"></div>
+    </div>
+  </div>
+</main>
+
+<script>const SKIN=['#F6D9BE','#EFC49B','#DFA87B','#C98A5C','#F9E3CD'];
+const HAIR=['#2B2119','#3E2B1C','#141210','#5A3A22','#8B5A2B'];
+const CLOTH=['#D8452F','#2F5D8C','#4E8C57','#7B5EA7','#E0A32E','#5A6670','#C25B8E','#3E8C8C'];
+
+function faceSVG(o){
+  o=o||{};
+  const skin=SKIN[o.skin||1], hair=HAIR[o.hair||0], cloth=CLOTH[(o.cloth!==undefined?o.cloth:0)%CLOTH.length];
+  const style=o.style||'short';       // short / long / twin / buzz / curly / cap / hood
+  const e=o.expr||'calm';             // calm smile grin sad angry shock evil tired
+  let S='',id='p'+(Math.random()*1e6|0);
+
+  // 表情：眼
+  let eyes='';
+  const eye=(x,y)=>{
+    if(e==='sad')    return `<path d="M${x-4} ${y-2} q4 3 8 0" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+    if(e==='shock')  return `<ellipse cx="${x}" cy="${y}" rx="3.4" ry="4.4" fill="#fff" stroke="#1E1A16" stroke-width="1.8"/><circle cx="${x}" cy="${y+1}" r="1.9" fill="#1E1A16"/>`;
+    if(e==='evil'||e==='angry') return `<path d="M${x-4} ${y+2} l8 -4" stroke="#1E1A16" stroke-width="2.4" stroke-linecap="round"/>`;
+    if(e==='tired')  return `<path d="M${x-4} ${y} h8" stroke="#1E1A16" stroke-width="2.2" stroke-linecap="round"/><path d="M${x-4} ${y-4.5} q4 -2 8 0" stroke="#1E1A16" stroke-width="1.5" fill="none"/>`;
+    if(e==='grin')   return `<path d="M${x-4} ${y} q4 5 8 0" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+    return `<ellipse cx="${x}" cy="${y}" rx="3.1" ry="3.9" fill="#fff" stroke="#1E1A16" stroke-width="1.8"/><circle cx="${x}" cy="${y+0.6}" r="1.8" fill="#1E1A16"/>`;
+  };
+  // 眉毛
+  let brows='';
+  const brow=(x,y,tilt)=>{
+    const d=tilt<0?`M${x-5} ${y-2} l10 2`:`M${x-5} ${y+2} l10 -2`;
+    return `<path d="${d}" stroke="#1E1A16" stroke-width="2" fill="none" stroke-linecap="round" opacity=".85"/>`;
+  };
+  eyes = eye(19,34)+eye(37,34);
+  if(e==='angry') brows = brow(19,26,-1)+brow(37,26,-1);
+  if(e==='evil')  brows = brow(19,26,-1)+brow(37,26,-1);
+  if(e==='sad')   brows = brow(19,25,1)+brow(37,25,1);
+  if(e==='shock') brows = brow(19,25,1)+brow(37,25,1);
+
+  // 嘴
+  let mouth='';
+  if(e==='smile')  mouth=`<path d="M22 45 q6 5 12 0" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  if(e==='grin')   mouth=`<path d="M20 44 q8 9 16 0 z" fill="#7A3B33" stroke="#1E1A16" stroke-width="1.8" stroke-linejoin="round"/><path d="M23 44 h10" stroke="#1E1A16" stroke-width="1.4"/>`;
+  if(e==='sad')    mouth=`<path d="M22 48 q6 -5 12 0" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  if(e==='angry')  mouth=`<path d="M21 48 q7 -4 14 0" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  if(e==='shock')  mouth=`<ellipse cx="28" cy="47" rx="3.6" ry="4.6" fill="#7A3B33" stroke="#1E1A16" stroke-width="1.7"/>`;
+  if(e==='evil')   mouth=`<path d="M20 46 q8 7 16 0" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M24 46 l1.6 3 1.6 -3 1.6 3 1.6 -3" fill="#1E1A16"/>`;
+  if(e==='tired')  mouth=`<path d="M23 47 h10" stroke="#1E1A16" stroke-width="2.2" stroke-linecap="round"/>`;
+
+  // 头发
+  let hairS='';
+  if(style==='short'){
+    hairS=`<path d="M13 33 q0 -19 15 -19 q15 0 15 19 q-4 -9 -15 -8 q-11 -1 -15 8 z" fill="${hair}"/>`;
+  } else if(style==='buzz'){
+    hairS=`<path d="M14 30 q1 -16 14 -16 q13 0 14 16 q-5 -7 -14 -6 q-9 -1 -14 6 z" fill="${hair}"/>`;
+  } else if(style==='long'){
+    hairS=`<path d="M12 36 q-1 -22 16 -22 q17 0 16 22 l-4 24 l-4 -6 l-1 -18 q-4 4 -11 3 q-7 1 -11 -3 l-1 18 l-4 6 z" fill="${hair}"/>`;
+  } else if(style==='twin'){
+    hairS=`<circle cx="8" cy="30" r="6" fill="${hair}"/><circle cx="48" cy="30" r="6" fill="${hair}"/>
+           <path d="M13 33 q0 -19 15 -19 q15 0 15 19 q-4 -9 -15 -8 q-11 -1 -15 8 z" fill="${hair}"/>`;
+  } else if(style==='curly'){
+    hairS=`<circle cx="13" cy="20" r="7" fill="${hair}"/><circle cx="24" cy="13" r="8" fill="${hair}"/>
+           <circle cx="38" cy="13" r="8" fill="${hair}"/><circle cx="49" cy="21" r="7" fill="${hair}"/>
+           <path d="M13 32 q0 -16 15 -16 q15 0 15 16 q-4 -8 -15 -7 q-11 -1 -15 7 z" fill="${hair}"/>`;
+  } else if(style==='cap'){
+    hairS=`<path d="M13 33 q0 -19 15 -19 q15 0 15 19 q-4 -9 -15 -8 q-11 -1 -15 8 z" fill="${hair}"/>
+           <path d="M11 26 q0 -16 17 -16 q17 0 17 15 l-34 1 z" fill="${cloth}"/><path d="M45 25 l7 4 l-7 1 z" fill="${cloth}"/>`;
+  } else if(style==='hood'){
+    hairS=`<path d="M12 34 q0 -20 16 -20 q16 0 16 20 q-4 -9 -16 -8 q-12 -1 -16 8 z" fill="${hair}"/>
+           <path d="M8 40 q0 -26 20 -26 q20 0 20 26 l-4 -2 q0 -20 -16 -20 q-16 0 -16 20 z" fill="${cloth}"/>`;
+  }
+  if(style!=='cap'&&style!=='hood'){
+    hairS=`<path d="M13 33 q0 -19 15 -19 q15 0 15 19 q-4 -9 -15 -8 q-11 -1 -15 8 z" fill="${hair}"/>` + hairS;
+  }
+
+  // 身体姿势
+  const pose=o.pose||'stand';   // stand / point / arms / sit / back / half / shrug
+  let body='';
+  const torso=`<path d="M18 60 h20 q7 0 7 8 v16 h-34 v-16 q0 -8 7 -8 z" fill="${cloth}" stroke="#1E1A16" stroke-width="2.2"/>`;
+  if(pose==='stand'||pose==='arms'){
+    body = torso + `<path d="M18 66 q-7 8 -7 18" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                    <path d="M38 66 q7 8 7 18" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                    <path d="M18 66 q-6 9 -6 18 l6 1 z" fill="${skin}" stroke="#1E1A16" stroke-width="1.8"/>
+                    <path d="M38 66 q6 9 6 18 l-6 1 z" fill="${skin}" stroke="#1E1A16" stroke-width="1.8"/>`;
+    if(pose==='arms') body = torso + `<path d="M17 66 q-6 10 0 17" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M39 66 q6 10 0 17" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  } else if(pose==='point'){
+    body = torso + `<path d="M39 68 q14 -4 17 -12" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                    <path d="M55 54 q4 -2 5 2 q-1 4 -6 4 z" fill="${skin}" stroke="#1E1A16" stroke-width="1.8"/>
+                    <path d="M18 66 q-7 9 -7 19" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                    <path d="M18 66 q-6 9 -6 19 l6 1 z" fill="${skin}" stroke="#1E1A16" stroke-width="1.8"/>`;
+  } else if(pose==='shrug'){
+    body = torso + `<path d="M18 67 q-9 2 -8 10" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                    <path d="M38 67 q9 2 8 10" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                    <path d="M9 76 q-4 3 1 5" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  } else if(pose==='back'){
+    body = `<path d="M18 60 h20 q7 0 7 8 v16 h-34 v-16 q0 -8 7 -8 z" fill="${cloth}" stroke="#1E1A16" stroke-width="2.2"/>
+            <path d="M14 32 q0 -18 14 -18 q14 0 14 18 q-2 6-3 8 h-22 q-1 -2 -3 -8 z" fill="${hair}" stroke="#1E1A16" stroke-width="2"/>`;
+  } else { // half 半身
+    body = torso;
+  }
+
+  // 腮红 / 汗
+  let extra='';
+  if(e==='shock'||e==='evil') extra+=`<path d="M46 40 q3 3 0 5" stroke="#7FB7D8" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  if(o.sweat) extra+=`<ellipse cx="45" cy="38" rx="3" ry="4.5" fill="#8FC7E8" stroke="#1E1A16" stroke-width="1.4"/>`;
+
+  return `<svg viewBox="0 0 56 96" xmlns="http://www.w3.org/2000/svg">
+    <g>${body}</g>
+    <g>
+      <rect x="10" y="14" width="36" height="42" rx="17" fill="${skin}" stroke="#1E1A16" stroke-width="2.2"/>
+      ${hairS}
+      ${eyes}${brows}${mouth}
+      <ellipse cx="16" cy="42" rx="3.4" ry="2.2" fill="#E89A8A" opacity=".5"/>
+      <ellipse cx="40" cy="42" rx="3.4" ry="2.2" fill="#E89A8A" opacity=".5"/>
+      ${extra}
+    </g></svg>`;
+}
+
+function faceHTML(o,px){
+  const d=document.createElement('div');
+  d.style.cssText='width:'+px+'px;height:'+px+'px;overflow:hidden';
+  d.innerHTML=faceSVG(o);
+  const s=d.firstChild; s.setAttribute('width',px); s.setAttribute('height',px);
+  return d.innerHTML;
+}
+
+
+
+/* 把一组人物摆进分镜里 */
+function castStage(cast, speaker, moodMap){
+  const list = (cast && cast.length) ? cast : ['me'];
+  const n = list.length;
+  const size = n<=1 ? 'big' : (n===2 || n===3) ? 'mid' : 'sm';
+  const bubbles = { dashuang:'😏', zhengkai:'😝', ahao:'😢', chenxiaoyu:'📖', laowang:'😠', mom:'📱', dad:'😔', laoli:'💰', headteacher:'📋', me:'' };
+  let html = '<div class="cast-stage">';
+  list.forEach((k, i) => {
+    const c = CAST[k]; if(!c) return;
+    const f = Object.assign({}, c.face);
+    if(k === speaker && f.expr === 'calm') f.expr = 'smile';
+    if(moodMap && moodMap[k]) Object.assign(f, moodMap[k]);
+    const isMe = k === 'me';
+    const nmCls = c.kind==='neg' ? 'neg' : (c.kind==='pos' ? 'pos' : '');
+    const bub = (!isMe && bubbles[k]) ? '<span class="bub">'+bubbles[k]+'</span>' : '';
+    const scale = isMe ? (n<=2 ? 1.18 : 1.07) : 1;
+    html += '<div class="fig '+(isMe?'me ':'')+size+'" style="height:'+Math.round(96*scale)+'%;animation-delay:'+(i*0.09)+'s">'
+      + bub
+      + '<span class="nm '+nmCls+'">'+c.name+'</span>'
+      + '<span class="figbody">'+faceSVG(f)+'</span>'
+      + '<span class="shadow"></span></div>';
+  });
+  return html + '</div>';
+}
+
+function bgSVG(kind){
+  const W=400,H=240;
+  const defs=`<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#BFE0F0"/><stop offset="1" stop-color="#EAF6FB"/></linearGradient>
+      <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7EEDD"/><stop offset="1" stop-color="#EADCC4"/></linearGradient>
+      <linearGradient id="win" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#CBE8F6"/><stop offset="1" stop-color="#9BD2EA"/></linearGradient></defs>`;
+  let s='';
+  if(kind==='home'){
+    s=`<rect width="${W}" height="${H}" fill="url(#wall)"/>
+      <rect y="185" width="${W}" height="55" fill="#C9A87C"/>
+      <line x1="0" y1="185" x2="${W}" y2="185" stroke="#1E1A16" stroke-width="2.5"/>
+      <line x1="0" y1="213" x2="${W}" y2="213" stroke="#8E7145" stroke-width="1.2" opacity=".6"/>
+      <rect x="24" y="52" width="104" height="76" rx="4" fill="url(#win)" stroke="#1E1A16" stroke-width="2.5"/>
+      <line x1="76" y1="52" x2="76" y2="128" stroke="#1E1A16" stroke-width="2"/>
+      <line x1="24" y1="90" x2="128" y2="90" stroke="#1E1A16" stroke-width="2"/>
+      <rect x="238" y="42" width="132" height="80" rx="3" fill="#FBF4E6" stroke="#1E1A16" stroke-width="2.5"/>
+      <path d="M238 60 h132" stroke="#1E1A16" stroke-width="1.8"/>
+      <path d="M300 60 v62 M268 60 v62" stroke="#1E1A16" stroke-width="1" opacity=".25"/>
+      <rect x="0" y="0" width="${W}" height="42" fill="#D9C39C" opacity=".5"/>`;
+  } else if(kind==='street'){
+    s=`<rect width="${W}" height="${H}" fill="url(#sky)"/>
+      <circle cx="330" cy="42" r="20" fill="#FFE07A" opacity=".9"/>
+      <g fill="#fff" opacity=".92"><ellipse cx="70" cy="46" rx="30" ry="13"/><ellipse cx="96" cy="40" rx="20" ry="11"/><ellipse cx="230" cy="62" rx="26" ry="11"/></g>
+      <rect y="150" width="${W}" height="90" fill="#CFC4B4"/>
+      <rect y="150" width="${W}" height="90" fill="url(#wall)" opacity=".35"/>
+      <line x1="0" y1="150" x2="${W}" y2="150" stroke="#1E1A16" stroke-width="2.5"/>
+      <g stroke="#8B7F6E" stroke-width="1.4" opacity=".5"><line x1="40" y1="150" x2="10" y2="240"/><line x1="120" y1="150" x2="105" y2="240"/><line x1="210" y1="150" x2="210" y2="240"/><line x1="300" y1="150" x2="325" y2="240"/></g>
+      <g fill="#6B7A5A" stroke="#1E1A16" stroke-width="1.6"><circle cx="52" cy="128" r="16"/><rect x="50" y="140" width="5" height="12"/><circle cx="352" cy="134" r="14"/><rect x="350" y="144" width="5" height="8"/></g>
+      <rect x="176" y="98" width="48" height="52" fill="#E8DCC2" stroke="#1E1A16" stroke-width="2"/>
+      <path d="M176 98 h48 l-6 -14 h-36 z" fill="#B4503F" stroke="#1E1A16" stroke-width="2"/>`;
+  } else if(kind==='gate'){
+    s=`<rect width="${W}" height="${H}" fill="url(#sky)"/>
+      <g fill="#fff" opacity=".9"><ellipse cx="60" cy="40" rx="28" ry="12"/><ellipse cx="86" cy="34" rx="18" ry="10"/><ellipse cx="300" cy="52" rx="24" ry="10"/></g>
+      <rect y="160" width="${W}" height="80" fill="#C6BCAE"/>
+      <rect y="160" width="${W}" height="80" fill="#D8452F" opacity=".25"/>
+      <line x1="0" y1="160" x2="${W}" y2="160" stroke="#1E1A16" stroke-width="2.5"/>
+      <g fill="#EFEAE0" stroke="#1E1A16" stroke-width="2.5"><rect x="18" y="52" width="42" height="112"/><rect x="340" y="52" width="42" height="112"/></g>
+      <g fill="#8E7A5E" font-size="26" font-weight="900"><text x="22" y="118" fill="#8E2A1C">育</text><text x="344" y="118" fill="#8E2A1C">中</text></g>
+      <rect x="60" y="40" width="280" height="16" rx="4" fill="#B4503F" stroke="#1E1A16" stroke-width="2.2"/>
+      <text x="200" y="53" font-size="11" fill="#FBF4E6" font-weight="800" text-anchor="middle" letter-spacing="4">实验中学 · 初中部</text>
+      <g stroke="#8B7F6E" stroke-width="1.4" opacity=".45"><line x1="0" y1="196" x2="${W}" y2="196"/><line x1="0" y1="222" x2="${W}" y2="222"/></g>`;
+  } else if(kind==='class'){
+    s=`<rect width="${W}" height="${H}" fill="url(#wall)"/>
+      <rect y="196" width="${W}" height="44" fill="#C9A87C"/>
+      <line x1="0" y1="196" x2="${W}" y2="196" stroke="#1E1A16" stroke-width="2.5"/>
+      <rect x="122" y="26" width="156" height="78" rx="3" fill="#2C5B45" stroke="#1E1A16" stroke-width="3"/>
+      <path d="M132 92 h50M132 80 h38M132 68 h60M196 92 h68M196 80 h44M196 68 h72" stroke="#E8F0E4" stroke-width="2" opacity=".55"/>
+      <g fill="#EFEAE0" stroke="#1E1A16" stroke-width="2.2"><rect x="10" y="40" width="44" height="60"/><rect x="346" y="40" width="44" height="60"/></g>
+      <g fill="#8FC7E8" opacity=".55"><rect x="14" y="44" width="36" height="52"/></g><g fill="#8FC7E8" opacity=".55"><rect x="350" y="44" width="36" height="52"/></g>
+      <g fill="#C9A87C" stroke="#1E1A16" stroke-width="2"><rect x="40" y="176" width="140" height="9" rx="2"/><rect x="220" y="176" width="140" height="9" rx="2"/></g>
+      <g stroke="#8B7F6E" stroke-width="2" opacity=".5"><line x1="80" y1="185" x2="76" y2="212"/><line x1="150" y1="185" x2="154" y2="212"/><line x1="260" y1="185" x2="256" y2="212"/><line x1="330" y1="185" x2="334" y2="212"/></g>`;
+  } else if(kind==='hall'){
+    s=`<rect width="${W}" height="${H}" fill="#E4DACA"/>
+      <rect x="0" y="0" width="104" height="${H}" fill="#D5C7B2"/>
+      <rect x="296" y="0" width="104" height="${H}" fill="#D5C7B2"/>
+      <rect x="104" y="0" width="192" height="152" fill="#CFC0AA"/>
+      <g fill="url(#win)" stroke="#1E1A16" stroke-width="2.2"><rect x="124" y="24" width="60" height="52"/><rect x="216" y="24" width="60" height="52"/></g>
+      <rect y="152" width="${W}" height="10" fill="#CFC0AA"/>
+      <rect y="162" width="${W}" height="78" fill="#B9AE9C"/>
+      <line x1="0" y1="152" x2="${W}" y2="152" stroke="#1E1A16" stroke-width="2.5"/>
+      <g stroke="#8B7F6E" stroke-width="1.5" opacity=".55"><line x1="0" y1="200" x2="${W}" y2="200"/></g>
+      <rect x="18" y="46" width="60" height="26" rx="3" fill="#FBF4E6" stroke="#1E1A16" stroke-width="2"/>
+      <text x="48" y="64" font-size="13" font-weight="800" text-anchor="middle" fill="#8E2A1C">3 班</text>
+      <rect x="322" y="46" width="60" height="26" rx="3" fill="#FBF4E6" stroke="#1E1A16" stroke-width="2"/>
+      <text x="352" y="64" font-size="13" font-weight="800" text-anchor="middle" fill="#8E2A1C">4 班</text>`;
+  } else if(kind==='canteen'){
+    s=`<rect width="${W}" height="${H}" fill="#EDE3D2"/>
+      <rect y="188" width="${W}" height="52" fill="#C0B49F"/>
+      <line x1="0" y1="188" x2="${W}" y2="188" stroke="#1E1A16" stroke-width="2.5"/>
+      <rect x="12" y="24" width="120" height="34" rx="4" fill="#D8452F" stroke="#1E1A16" stroke-width="2.5"/>
+      <text x="72" y="47" font-size="15" font-weight="800" fill="#fff" text-anchor="middle" letter-spacing="2">食 堂</text>
+      <rect x="268" y="24" width="120" height="34" rx="4" fill="#2F5D8C" stroke="#1E1A16" stroke-width="2.5"/>
+      <text x="328" y="47" font-size="15" font-weight="800" fill="#fff" text-anchor="middle" letter-spacing="2">打 饭 区</text>
+      <g fill="#B9906A" stroke="#1E1A16" stroke-width="2"><rect x="34" y="96" width="150" height="12" rx="3"/><rect x="216" y="96" width="150" height="12" rx="3"/></g>
+      <g fill="#C9BFAE" stroke="#1E1A16" stroke-width="1.6"><rect x="40" y="108" width="8" height="80"/><rect x="164" y="108" width="8" height="80"/><rect x="222" y="108" width="8" height="80"/><rect x="352" y="108" width="8" height="80"/></g>
+      <g fill="#D8CDBA" stroke="#1E1A16" stroke-width="2"><rect x="56" y="140" width="106" height="12" rx="3"/><rect x="238" y="140" width="106" height="12" rx="3"/></g>
+      <g fill="#E8C57A" opacity=".9"><circle cx="70" cy="132" r="7"/><circle cx="92" cy="133" r="6"/><circle cx="252" cy="133" r="7"/></g>`;
+  } else if(kind==='office'){
+    s=`<rect width="${W}" height="${H}" fill="#EDE6D8"/>
+      <rect y="192" width="${W}" height="48" fill="#A9762F"/>
+      <line x1="0" y1="192" x2="${W}" y2="192" stroke="#1E1A16" stroke-width="2.5"/>
+      <rect x="42" y="26" width="316" height="60" rx="3" fill="#2C5B45" stroke="#1E1A16" stroke-width="3"/>
+      <text x="200" y="66" font-size="26" font-weight="900" fill="#F2E9D8" text-anchor="middle" letter-spacing="8">师德</text>
+      <g fill="#C9B48E" stroke="#1E1A16" stroke-width="2"><rect x="16" y="128" width="110" height="12" rx="3"/><rect x="274" y="128" width="110" height="12" rx="3"/></g>
+      <g fill="#E8DCC2" stroke="#1E1A16" stroke-width="2"><rect x="60" y="120" width="60" height="14" rx="5"/><rect x="310" y="120" width="60" height="14" rx="5"/></g>
+      <g fill="#B9906A" opacity=".9"><rect x="300" y="160" width="70" height="30" rx="2"/><rect x="304" y="166" width="62" height="18" fill="#F3EAD6"/></g>`;
+  } else if(kind==='field'){
+    s=`<rect width="${W}" height="${H}" fill="url(#sky)"/>
+      <circle cx="48" cy="40" r="18" fill="#FFE07A"/>
+      <g fill="#fff" opacity=".85"><ellipse cx="260" cy="40" rx="26" ry="11"/><ellipse cx="290" cy="34" rx="16" ry="9"/></g>
+      <path d="M0 118 q100 -22 200 0 t200 0 v${H-118} H0 z" fill="#7BB661"/>
+      <ellipse cx="200" cy="196" rx="150" ry="42" fill="#D9C79A" stroke="#1E1A16" stroke-width="2.5"/>
+      <g stroke="#8E7145" stroke-width="1.3" opacity=".45"><line x1="70" y1="186" x2="112" y2="190"/><line x1="300" y1="200" x2="344" y2="204"/></g>
+      <g stroke="#6E9E55" stroke-width="2" opacity=".6"><path d="M0 130 h400" stroke-dasharray="6 8"/></g>`;
+  } else if(kind==='night'){
+    s=`<rect width="${W}" height="${H}" fill="#2B3A55"/>
+      <rect width="${W}" height="${H}" fill="#131E33" opacity=".45"/>
+      <g fill="#FBF4E6"><rect x="24" y="30" width="56" height="48" rx="3"/><rect x="150" y="30" width="56" height="48" rx="3"/><rect x="276" y="30" width="56" height="48" rx="3"/></g>
+      <g fill="#3B4A66" stroke="#1E1A16" stroke-width="1.6"><line x1="52" y1="30" x2="52" y2="78"/><line x1="178" y1="30" x2="178" y2="78"/><line x1="304" y1="30" x2="304" y2="78"/></g>
+      <circle cx="330" cy="42" r="15" fill="#FBEFC0"/>
+      <circle cx="323" cy="38" r="14" fill="#2B3A55"/>
+      <g fill="#FBF4E6" opacity=".85"><circle cx="70" cy="150" r="1.6"/><circle cx="130" cy="130" r="1.2"/><circle cx="210" cy="160" r="1.5"/><circle cx="290" cy="128" r="1.3"/><circle cx="350" cy="168" r="1.5"/></g>
+      <rect y="196" width="${W}" height="44" fill="#4A3B30"/>
+      <line x1="0" y1="196" x2="${W}" y2="196" stroke="#1E1A16" stroke-width="2.5"/>`;
+  } else if(kind==='end'){
+    s=`<rect width="${W}" height="${H}" fill="#F3E7D3"/>
+      <g fill="#E0A32E" opacity=".35"><circle cx="60" cy="50" r="30"/><circle cx="340" cy="70" r="24"/><circle cx="200" cy="30" r="18"/></g>
+      <path d="M0 200 q100 -30 200 -6 t200 -10 v${H-184} H0 z" fill="#D8452F" opacity=".18"/>
+      <g stroke="#1E1A16" stroke-width="2" opacity=".2"><line x1="0" y1="60" x2="400" y2="60"/><line x1="0" y1="120" x2="400" y2="120"/></g>`;
+  }
+  return `<svg class="bg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">${defs}${s}</svg>`;
+}
+
+
+</script>
+<script>
+
+/* ==========================================================================
+   今天这一天 · 游戏内容
+   二(3)班的一天。所有的选择都会在晚上变成"你变成什么样的人"。
+   ========================================================================== */
+
+/* ---------- 人物 ---------- */
+const CAST = {
+  me:   { name:'我', short:'我', face:{skin:1,hair:0,style:'short',cloth:0,expr:'calm',pose:'half'},
+          tag:'你', kind:'self' },
+  dashuang:{ name:'大壮', face:{skin:2,hair:1,style:'buzz',cloth:2,expr:'grin',pose:'stand'},
+          tag:'后排大哥', kind:'neg',
+          line:'嗨！今天别写作业了，跟哥去玩会儿呗？' },
+  zhengkai:{ name:'郑凯', face:{skin:3,hair:0,style:'curly',cloth:6,expr:'evil',pose:'shrug'},
+          tag:'爱起哄的', kind:'neg',
+          line:'哎哟，你这不是装吗？大壮跟你说话呢，装听不见？' },
+  chenxiaoyu:{ name:'陈小雨', face:{skin:0,hair:2,style:'twin',cloth:4,expr:'smile',pose:'stand'},
+          tag:'学习委员', kind:'pos',
+          line:'林小满，你昨天的数学作业第 3 题写错了，我给你标出来了。' },
+  laowang:{ name:'老王', face:{skin:4,hair:3,style:'buzz',cloth:6,expr:'angry',pose:'point'},
+          tag:'数学老师', kind:'pos',
+          line:'林小满！你今天上课又在发呆，站起来把这道题做一遍！' },
+  ahao:{ name:'阿杰', face:{skin:1,hair:1,style:'short',cloth:3,expr:'sad',pose:'stand'},
+          tag:'刚转来的', kind:'mid',
+          line:'我……我不太敢跟大壮他们一起玩，他们老是抢我东西。' },
+  mom:  { name:'妈妈', face:{skin:0,hair:2,style:'long',cloth:1,expr:'angry',pose:'arms'},
+          tag:'家里', kind:'fam',
+          line:'你看看你！上次考试又掉了一名！你一天到晚就知道玩手机！' },
+  dad:  { name:'爸爸', face:{skin:4,hair:4,style:'buzz',cloth:5,expr:'tired',pose:'stand'},
+          tag:'家里', kind:'fam',
+          line:'（他看了你一眼，把工资卡放回抽屉，一句话也没说。）' },
+  laoli:{ name:'老李', face:{skin:3,hair:1,style:'short',cloth:7,expr:'grin',pose:'point'},
+          tag:'游戏厅老板', kind:'neg',
+          line:'小老板，充 50 送 10 块，玩一下午没问题吧？' },
+  headteacher:{ name:'陈老师', face:{skin:0,hair:2,style:'short',cloth:6,expr:'calm',pose:'stand'},
+          tag:'班主任', kind:'pos',
+          line:'你找我很对，遇到这种事必须第一时间告诉我，这不是告状。' }
+};
+
+/* ---------- 一天的场景（线性，每场 3~4 个选择） ---------- */
+const SCENES = [
+/* ============ 1. 起床 ============ */
+{
+  id:'wake', time:'06:30', place:'家里 · 你的房间', bg:'home',
+  mood:{ me:{expr:'tired',pose:'half'}, mom:{expr:'angry',pose:'arms'} },
+  narr:'闹钟响了。<em>第三遍</em>。妈妈已经在门外敲了两次门，声音从敲门变成了拍门。你把被子往上拉，蒙住头。',
+  cast:['me','mom'], who:'妈妈', line:'还不起！都六点半了！你在里面干什么——游戏打了一晚上吧！',
+  reply:'（你听见她把什么东西放在了门口的地板上。）',
+  choices:[
+    { t:'立刻起床，认认真真洗漱', sub:'早一点出门，今天就不慌',
+      fx:{ energy:6, conf:3, mood:-2 }, inf:{ mom:4, laowang:2 }, rep:1,
+      log:'你比平时早了 15 分钟出门。<b class="pos">妈妈愣了一下</b>，没说话，把牛奶推给你。' },
+    { t:'在被子里再躺 10 分钟', sub:'就 10 分钟……',
+      fx:{ energy:10, mood:4, study:-2 }, inf:{ mom:-6 }, rep:-2,
+      log:'出门晚了 12 分钟。你在楼梯上跑着下樓，<b class="neg">书包带子断了都没发现</b>。' },
+    { t:'大声回一句"知道了！烦死了"', sub:'把气撒在妈妈身上',
+      fx:{ mood:-6, conf:2, energy:-4 }, inf:{ mom:-14 }, rep:-3,
+      log:'门外的拍门声停了三秒，然后是<b class="neg">很重的一声关门</b>。' }
+  ]
+},
+
+/* ============ 2. 早餐桌 ============ */
+{
+  id:'breakfast', time:'07:00', place:'家里 · 餐桌', bg:'home',
+  mood:{ me:{expr:'sad',pose:'sit'}, mom:{expr:'angry',pose:'arms'}, dad:{expr:'tired',pose:'stand'} },
+  narr:'早饭是白粥、咸菜、一个鸡蛋。妈妈一边吃一边看手机上的成绩页面；爸爸在剥鸡蛋，剥好了放在你碗边。',
+  cast:['me','mom','dad'], who:'妈妈', line:'我看了你们班上次排名。你从年级二十几掉到六十多了，你自己心里有数吗？',
+  reply:'爸爸没抬头。他把那个鸡蛋往你这边推了推。',
+  choices:[
+    { t:'认真回答：知道自己退步了，这周开始每天少玩一小时', sub:'不狡辩，认下来',
+      fx:{ study:5, conf:6, mood:-3 }, inf:{ mom:12, dad:5, laowang:4 }, rep:1,
+      log:'妈妈的表情松了一点：「那你说到做到。」<b class="pos">爸爸看了你一眼</b>。' },
+    { t:'顶回去：一次考试说明不了什么', sub:'你觉得这不公平',
+      fx:{ conf:3, mood:3, study:-3 }, inf:{ mom:-10, dad:2 }, rep:-1,
+      log:'「行，你有道理。」妈妈把手机收起来，<b class="neg">整顿饭再没说话</b>。' },
+    { t:'什么都不说，低头快速吃完就出门', sub:'避开冲突',
+      fx:{ energy:3, mood:-4, conf:-3 }, inf:{ mom:-4, dad:-2 }, rep:0,
+      log:'你听见妈妈在背后说了一句<b class="neg">"这孩子越来越像他爸"</b>。' }
+  ]
+},
+
+/* ============ 3. 上学路上 ============ */
+{
+  id:'road', time:'07:25', place:'去学校的路上', bg:'street',
+  mood:{ me:{expr:'calm',pose:'stand'}, zhengkai:{expr:'evil',pose:'point'} },
+  narr:'你和郑凯一起走。半路有个游戏厅，门口挂着"新机台上市"的横幅，玻璃里透出彩色的光。',
+  cast:['me','zhengkai'], who:'郑凯', line:'哎！大壮在里面，昨天他在那儿赢了两百块。请你喝水，走不走？',
+  reply:'（大壮从里面探出头，看见你，笑了一下。）',
+  choices:[
+    { t:'摇头，说"我要去学校"，直接走开', sub:'第一次拒绝他们',
+      fx:{ study:3, conf:6, mood:-3, energy:-3 }, inf:{ dashuang:-6, zhengkai:-4, laowang:3 }, rep:2,
+      log:'你在门口站了两秒就走开了。郑凯在后面喊「装什么装」。<b class="pos">你走的时候腿有点抖，但你没回头。</b>' },
+    { t:'进去待 10 分钟', sub:'就 10 分钟，而且不去学校了',
+      fx:{ mood:10, conf:-4, study:-9, energy:-8 }, inf:{ dashuang:10, zhengkai:6, mom:-3, laowang:-8 }, rep:-6,
+      log:'你玩了 10 分钟，然后<b class="neg">又待了 50 分钟</b>。等你看手机，第一节课已经上完了。' },
+    { t:'拉郑凯一起走："你这样会考不上的"', sub:'试着拉他一把',
+      fx:{ conf:4, mood:2, study:2 }, inf:{ zhengkai:8, dashuang:-4, laowang:3 }, rep:3,
+      log:'郑凯愣了一下，说"……哦"。他跟你一起到了学校。<b class="pos">大壮在后面说"扫兴"</b>。' }
+  ]
+},
+
+/* ============ 4. 早读 ============ */
+{
+  id:'morning_read', time:'07:50', place:'教室', bg:'class',
+  mood:{ me:{expr:'shock',pose:'half'}, chenxiaoyu:{expr:'smile',pose:'stand'}, laowang:{expr:'angry',pose:'point'} },
+  narr:'语文课代表在讲台上领读。你昨晚什么也没复习，课本上那一页还是新的。老王站在教室后面，手里捏着一根粉笔。',
+  cast:['me','chenxiaoyu','laowang'], who:'老王', line:'林小满。你站着读。读完给我讲一遍"受任于天，奉命于危难之间"这句的意思。',
+  reply:'（全班回头看你。39 双眼睛。）',
+  choices:[
+    { t:'硬着头皮站起来，磕磕巴巴地讲完', sub:'答得不完整，但没躲',
+      fx:{ conf:8, study:2, mood:-3 }, inf:{ laowang:8, chenxiaoyu:3 }, rep:4,
+      log:'你讲错了一半，但从头到尾没停。老王点点头：「坐下，下次完整点。」<b class="pos">陈小雨回头朝你竖了一下大拇指</b>。' },
+    { t:'装作没听见，继续坐着', sub:'赌他不会点名',
+      fx:{ conf:-8, study:-2, mood:-6 }, inf:{ laowang:-14, chenxiaoyu:-4 }, rep:-6,
+      log:'老王走过来，用粉笔头敲了一下你的桌角：「<b class="neg">站起来</b>。」全班笑了很久。' },
+    { t:'课前问陈小雨借了笔记', sub:'提前补上',
+      fx:{ study:6, conf:3, mood:2 }, inf:{ chenxiaoyu:8, laowang:2 }, rep:2,
+      log:'陈小雨把本子递过来，还用笔画了重点。「这个我昨天刚整理的。」<b class="pos">你抄的时候心里踏实了一点</b>。' }
+  ]
+},
+
+/* ============ 5. 课间 · 走廊 ============ */
+{
+  id:'break10', time:'09:35', place:'教学楼走廊', bg:'hall',
+  mood:{ me:{expr:'calm',pose:'stand'}, dashuang:{expr:'grin',pose:'shrug'}, zhengkai:{expr:'grin',pose:'stand'} },
+  narr:'下课铃一响，走廊立刻变成菜市场。有人去小卖部，有人去厕所，郑凯和大壮靠在栏杆上喊你。',
+  cast:['me','dashuang','zhengkai'], who:'大壮', line:'哎！手机带了没？我们去小卖部买冰的，我请。啊不对——',
+  reply:'（他往你这边凑了半步，郑凯在旁边笑。）',
+  choices:[
+    { t:'去小卖部，但只买水，不玩任何东西', sub:'跟着去，但守住线',
+      fx:{ mood:5, energy:4, study:-2 }, inf:{ dashuang:4, zhengkai:3 }, rep:1,
+      log:'你买了一瓶水，在小卖部门口站了五分钟就回教室了。<b class="pos">大壮说你"没意思"</b>，你听得出来。' },
+    { t:'说"我不去，你们玩吧"，回教室写作业', sub:'明确拒绝',
+      fx:{ study:7, conf:5, mood:-4 }, inf:{ dashuang:-8, zhengkai:-2, laowang:5, chenxiaoyu:3 }, rep:3,
+      log:'你回教室做完了数学卷子最后两道大题。<b class="pos">这是你这周第一次提前做完</b>。' },
+    { t:'跟他们去小卖部，然后一起翘了下一节课去后门抽烟', sub:'跟着走远了',
+      fx:{ mood:12, conf:-3, study:-10, energy:-6 }, inf:{ dashuang:14, zhengkai:8, laowang:-12, mom:-4 }, rep:-8,
+      log:'你们在后门站了二十分钟。<b class="neg">回来的时候教导主任在楼梯口</b>，四个人一起被记了名。' }
+  ]
+},
+
+/* ============ 6. 传纸条 ============ */
+{
+  id:'note', time:'10:40', place:'教室 · 第二节课', bg:'class',
+  mood:{ me:{expr:'shock',pose:'half'}, ahao:{expr:'sad',pose:'half'}, zhengkai:{expr:'evil',pose:'stand'} },
+  narr:'物理课。你低头看桌子底下——一张折了三折的纸从前面传过来，是阿杰的字。他写着：「救命。他们逼我给郑凯抄物理作业。」',
+  cast:['me','ahao','zhengkai'], who:'阿杰（纸条）', line:'我昨天不抄，郑凯就把我书包扔到走廊了。今天他说不抄就报告老师说我带手机。',
+  reply:'（你抬头，郑凯正盯着阿杰的后背。后排大壮在玩手机。讲台上老师背对着黑板写公式。）',
+  choices:[
+    { t:'把纸条收好，下课去找班主任陈老师', sub:'让能管的人处理',
+      fx:{ conf:5, mood:-2, study:-1 }, inf:{ ahao:16, zhengkai:-8, dashuang:-6, headteacher:8 }, rep:5,
+      log:'陈老师在办公室听完，敲了桌子：「明天我处理。」<b class="pos">阿杰在走廊上给你鞠了一躬</b>。' },
+    { t:'把纸条递给阿杰看，然后轻声跟他说"别怕，我陪你一起去"', sub:'先稳住他，再一起解决',
+      fx:{ conf:6, mood:-1, study:0 }, inf:{ ahao:20, dashuang:-4, zhengkai:-4, headteacher:2 }, rep:4,
+      log:'你陪阿杰等到下课，一起去的办公室。<b class="pos">郑凯的脸很难看，但他没说话</b>。' },
+    { t:'装作没看见，把纸条压在书下面', sub:'不想惹上麻烦',
+      fx:{ mood:-8, conf:-10, study:0 }, inf:{ ahao:-14, zhengkai:4, dashuang:3 }, rep:-7,
+      log:'那天下午你一直不敢看阿杰。<b class="neg">他在后门被郑凯推了一把，你听见了，没回头</b>。' },
+    { t:'直接把纸举起来交给讲台上的老师', sub:'当场解决',
+      fx:{ conf:9, mood:2, study:-3 }, inf:{ ahao:18, zhengkai:-16, dashuang:-12, laowang:5, headteacher:6 }, rep:8,
+      log:'全班都看见了。郑凯被叫到走廊。<b class="pos">阿杰哭了，但那是松了口气的那种哭</b>。代价是：这一整周，郑凯没跟你说过一句话。' }
+  ]
+},
+
+/* ============ 7. 午饭 ============ */
+{
+  id:'lunch', time:'12:00', place:'食堂', bg:'canteen',
+  mood:{ me:{expr:'calm',pose:'stand'}, chenxiaoyu:{expr:'smile',pose:'stand'} },
+  narr:'中午。食堂里全是人。远处四年级那桌有人打了起来，饭盒摔在地上，周围一圈人在看热闹。',
+  cast:['me','chenxiaoyu'], who:'陈小雨', line:'别过去看啦。今天有红烧排骨，排队的人少了一点——我给你占了位置。',
+  reply:'（她指了指角落那张桌子，上面放着一份餐盘。）',
+  choices:[
+    { t:'去她那儿坐下，吃顿安稳的饭，聊聊天', sub:'跟她说说最近的事',
+      fx:{ mood:8, energy:10, conf:4, study:1 }, inf:{ chenxiaoyu:14, mom:1 }, rep:1,
+      log:'吃饭的时候她问你"最近怎么老是不去食堂"。你说了游戏厅的事。<b class="pos">她没骂你，说"我以前也这样，后来被我妈骂醒了"</b>。' },
+    { t:'跑去看打架，被人群挤到最前面', sub:'看热闹',
+      fx:{ mood:6, energy:-4, conf:-2 }, inf:{ dashuang:5, zhengkai:4, chenxiaoyu:-4 }, rep:-2,
+      log:'你挤在最前面，被后面的人推了一把，差点摔倒。<b class="neg">食堂阿姨把你赶走了</b>。' },
+    { t:'端着饭回教室一个人吃，顺便把昨天没听的课补上', sub:'独处',
+      fx:{ study:6, energy:5, mood:-3 }, inf:{ laowang:4, chenxiaoyu:-2 }, rep:2,
+      log:'教室里只有你一个人。<b class="pos">你把那节课的笔记抄完了，抄到一半突然觉得没那么烦了</b>。' }
+  ]
+},
+
+/* ============ 8. 午休 · 手机 ============ */
+{
+  id:'nap', time:'13:40', place:'教室 · 午休', bg:'class',
+  mood:{ me:{expr:'tired',pose:'sit'}, dashuang:{expr:'grin',pose:'shrug'} },
+  narr:'午休。大壮的手机在你桌洞里震了一下，屏幕亮起来——群消息：「3 点后门，有位置，一起上号。」',
+  cast:['me','dashuang'], who:'大壮（消息）', line:'「来不来？不来下次别叫我兄弟。」',
+  reply:'（你抬头，看见他正跟后排几个人挤眉弄眼。教室里一半人在睡觉。）',
+  choices:[
+    { t:'把手机翻过去扣在桌上，趴下睡 20 分钟', sub:'睡一会儿',
+      fx:{ energy:14, mood:2, study:1 }, inf:{ dashuang:-6, laowang:3 }, rep:0,
+      log:'你睡了 20 分钟，醒来精神好多了。<b class="pos">下午第一节课你没走神</b>。' },
+    { t:'偷偷回一个字"来"，然后一直盯着秒表', sub:'纠结了一节课',
+      fx:{ mood:-6, conf:-4, study:-5, energy:-4 }, inf:{ dashuang:6, laowang:-3 }, rep:-2,
+      log:'你盯着那个"来"字看了一节课，什么也没记住。<b class="neg">大壮说"你真无聊"</b>。' },
+    { t:'举手告诉老师"大壮他们在传手机消息"', sub:'再举报一次',
+      fx:{ conf:3, mood:-4, study:1 }, inf:{ dashuang:-20, zhengkai:-12, laowang:6, headteacher:5, ahao:4 }, rep:-6,
+      log:'大壮他们三个被叫去办公室。<b class="neg">从这天起，你在班里被叫"告状精"</b>。他们不再叫你一起玩——包括那些本来想跟你玩的人。' }
+  ]
+},
+
+/* ============ 9. 体育课 · 被踹 ============ */
+{
+  id:'kicked', time:'15:50', place:'操场 · 体育课自由活动', bg:'field',
+  mood:{ me:{expr:'shock',pose:'stand',sweat:1}, dashuang:{expr:'evil',pose:'point'}, zhengkai:{expr:'grin',pose:'shrug'}, ahao:{expr:'sad',pose:'half'} },
+  narr:'老师说自由活动。篮球架下围了一圈人，你走过去想看看是谁在打球——然后大壮从侧面走过来，<em>一脚踹在你腿上</em>。',
+  cast:['me','dashuang','zhengkai','ahao'], who:'大壮', line:'（他笑了一下。）怎么，穿个鞋就了不起？这球场是我们班的，你去那边玩。',
+  reply:'（周围十来个同学都看着。郑凯在旁边喊"哎哟"。阿杰站在最外面，手里的球掉在地上。）',
+  choices:[
+    { t:'站稳不动，大声说："你再踹我一下，我就去告诉老师。"', sub:'不还手，但明确说不行',
+      fx:{ conf:14, mood:-4, study:0 }, inf:{ dashuang:-14, zhengkai:4, ahao:10, headteacher:2 }, rep:5,
+      log:'你站在原地，一动没动，重复了三遍。围观的同学都听见了。<b class="pos">他没敢再动手</b>。体育老师从远处看到了，走过来把大壮叫走了。' },
+    { t:'一脚踢回去，转身就走', sub:'还手',
+      fx:{ conf:-6, mood:8, study:-4, energy:-8 }, inf:{ dashuang:-24, zhengkai:-10, ahao:-6, laowang:-6, headteacher:-4 }, rep:-12,
+      log:'你们扭在一起，被两个人拉开。你膝盖破了一块皮。<b class="neg">傍晚你妈看到你的腿，脸色变了</b>——她不知道这是你先动的手。' },
+    { t:'什么都不说，蹲下来捡起地上的球，交给阿杰，转身走开', sub:'忍下来，走人',
+      fx:{ conf:-12, mood:-10, study:0, energy:-6 }, inf:{ dashuang:10, zhengkai:6, ahao:-4, mom:2 }, rep:-8,
+      log:'你走回教学楼的时候腿在抖。<b class="neg">这件事你谁都没告诉，包括你妈</b>。你在日记本上写了，又把那页撕了。' },
+    { t:'去找体育老师，直接说"大壮踹我"', sub:'当场找大人',
+      fx:{ conf:9, mood:-3, study:-1 }, inf:{ dashuang:-18, zhengkai:-6, ahao:8, headteacher:6, laowang:4 }, rep:4,
+      log:'体育老师当场把大壮拎到一边，记了名字，让他写检查。<b class="pos">老师拍了下你的肩，说"处理得对"</b>。' }
+  ]
+},
+
+/* ============ 10. 放学 · 走廊被拦 ============ */
+{
+  id:'after_school', time:'17:20', place:'教学楼走廊', bg:'hall',
+  mood:{ me:{expr:'calm',pose:'stand'}, dashuang:{expr:'evil',pose:'arms'}, zhengkai:{expr:'grin',pose:'point'} },
+  narr:'放学。人群散了，剩你一个人在收拾书包。郑凯和大壮堵在你桌子前面，隔着过道。',
+  cast:['me','dashuang','zhengkai'], who:'郑凯', line:'大壮说你今天很能装啊。道歉。',
+  reply:'（阿杰在门口看了一眼，又缩回去了。走廊里还有两三个人在慢慢往外走。）',
+  choices:[
+    { t:'说"我没做错任何事，我不道歉"，然后拎起书包走人', sub:'不认错，走',
+      fx:{ conf:10, mood:-5 }, inf:{ dashuang:-10, zhengkai:-6, ahao:6, headteacher:3 }, rep:3,
+      log:'你从他们旁边走过去，没人拦你。<b class="pos">走出教学楼的时候天还没黑，风很凉，你没跑</b>。' },
+    { t:'说"行，对不起"，先把这事了了', sub:'低头，先脱身',
+      fx:{ conf:-8, mood:-2 }, inf:{ dashuang:12, zhengkai:8, ahao:-6 }, rep:-3,
+      log:'你说了对不起，他们笑着走了。<b class="neg">回教室拿书包时，你发现你的作业本被撕了一角</b>。' },
+    { t:'掏出手机拍下来，说"我要发到班群里"', sub:'留证据',
+      fx:{ conf:7, mood:-4 }, inf:{ dashuang:-16, zhengkai:-10, headteacher:5, ahao:4 }, rep:-4,
+      log:'他们看到你举起手机就走了。当晚照片发给了陈老师。<b class="pos">事情被压下去了</b>，但从那天起，你走在走廊里总觉得有人在背后看你。' }
+  ]
+},
+
+/* ============ 11. 回家 · 家里的矛盾 ============ */
+{
+  id:'home', time:'18:40', place:'家里 · 客厅', bg:'home',
+  mood:{ me:{expr:'sad',pose:'stand'}, mom:{expr:'angry',pose:'arms'}, dad:{expr:'tired',pose:'sit'} },
+  narr:'你进门的时候，客厅的灯没全开。爸爸坐在沙发上看手机，妈妈在厨房，锅铲砸在锅上的声音很响。',
+  cast:['me','mom','dad'], who:'妈妈', line:'（她走出来，手里还拿着锅铲。）你回来啦。你们班那个第一名，是不是又是你们班的同学？人家怎么就那么用功？',
+  reply:'（爸爸把手机扣在腿上，看了一眼你，又看回手机。电视在放广告，声音很大，没人关。）',
+  choices:[
+    { t:'说"我今天被同学踹了一跤"——把学校的事说出来', sub:'先说自己的事',
+      fx:{ conf:7, mood:-4 }, inf:{ mom:16, dad:8, laowang:0 }, rep:0,
+      log:'锅铲放下了。妈妈问「谁干的？伤到没有？」，然后她拿起手机要给班主任打电话。<b class="pos">爸爸终于开口："我来打这个电话。"</b>这一刻你忽然觉得，家里是站在你这边的。' },
+    { t:'跟妈妈顶起来："你只会拿别人家的孩子跟我比！"', sub:'把火发出去',
+      fx:{ conf:-2, mood:-10, energy:-4 }, inf:{ mom:-20, dad:-6 }, rep:0,
+      log:'妈妈愣了两秒，把锅铲放下，说了一句"我不管了"，回房间了。<b class="neg">客厅里只剩下电视广告的声音和你爸的手机屏幕</b>。' },
+    { t:'什么都不说，回房间关门写作业', sub:'躲开',
+      fx:{ study:5, conf:-6, mood:-8 }, inf:{ mom:-8, dad:-4 }, rep:0,
+      log:'你关门的那一刻，听见妈妈在厨房跟爸爸说：<b class="neg">"这孩子心里根本没有我们"</b>。' },
+    { t:'先不写今天的事，去给妈妈倒杯水，然后跟她说"我这次月考会往前 10 名"', sub:'先把她哄好，再谈',
+      fx:{ study:3, conf:6, mood:3 }, inf:{ mom:10, dad:4 }, rep:0,
+      log:'妈妈接过杯子，眼睛红了一下。「你有这个心就行。」<b class="pos">爸爸在旁边说了句"我信你"</b>——他今天第一次跟你说话超过五个字。' }
+  ]
+},
+
+/* ============ 12. 晚上 · 作业 vs 游戏 ============ */
+{
+  id:'night', time:'20:30', place:'家里 · 你的房间', bg:'night',
+  mood:{ me:{expr:'tired',pose:'sit'}, dashuang:{expr:'grin',pose:'shrug'} },
+  narr:'台灯。作业本摊在桌上，手机在旁边。屏幕亮着：大壮在群里发了一张战绩截图，配文「今晚缺一个人，速来」。',
+  cast:['me','dashuang'], who:'大壮（消息）', line:'「不来的一律以后别叫我。你自己看着办。」',
+  reply:'（你的手已经放在手机上了。作业本上还有三道数学大题空着。）',
+  choices:[
+    { t:'把手机锁屏，扣过去，做完作业再洗漱睡觉', sub:'作业优先',
+      fx:{ study:9, energy:-6, conf:8, mood:-3 }, inf:{ dashuang:-8, laowang:6, mom:4, chenxiaoyu:3 }, rep:2,
+      log:'你做完了三道大题，其中一道做错了但自己检查出来改了。<b class="pos">23:40，你关灯</b>。' },
+    { t:'玩半小时，然后设闹钟 23:40 起来赶作业', sub:'两头都要',
+      fx:{ study:-3, mood:7, energy:-8, conf:-2 }, inf:{ dashuang:12, laowang:-2 }, rep:0,
+      log:'游戏很好玩。闹钟响的时候你发现<b class="neg">只剩两道大题</b>，你写到 1:20，抄了一个答案。' },
+    { t:'认真打一个小时，什么作业都不写', sub:'彻底放飞',
+      fx:{ mood:16, conf:2, study:-14, energy:-10 }, inf:{ dashuang:20, laowang:-10, mom:-6 }, rep:-4,
+      log:'你赢了四把，四点才躺下。<b class="neg">第二天第一节课你睡着了</b>。' },
+    { t:'给大壮回一句"今天不去了，我先把作业写完"，然后认真写完', sub:'明确说出来',
+      fx:{ study:8, conf:10, mood:-2 }, inf:{ dashuang:-6, mom:6, laowang:6, headteacher:4 }, rep:3,
+      log:'发完之后你紧张了一分钟，然后<b class="pos">整个晚上都很踏实</b>。' }
+  ]
+},
+
+/* ============ 13. 睡前 ============ */
+{
+  id:'bed', time:'23:20', place:'家里 · 床上', bg:'night',
+  mood:{ me:{expr:'sad',pose:'sit'} },
+  narr:'关灯了。天花板上有一条很亮的光缝。你脑子里过今天的每一件事，一件一件的。',
+  cast:['me'], who:'你自己', line:'……',
+  reply:'',
+  choices:[
+    { t:'想"我要变成什么样的人"，然后定了一个明天要做的事', sub:'往前想',
+      fx:{ conf:8, study:2, mood:3 }, inf:{ mom:2, laowang:2 }, rep:0,
+      log:'你在便签上写了三件事：<b class="pos">明天早读背单词、把数学卷子做完、跟阿杰说句话</b>。' },
+    { t:'想今天谁对我好、谁对我不好，一个一个过一遍', sub:'往回想',
+      fx:{ conf:4, mood:2, study:0 }, inf:{ ahao:4, chenxiaoyu:4, dashuang:-2 }, rep:0,
+      log:'你想起来<b class="pos">陈小雨把笔记递给你的时候说"我昨天刚整理的"</b>。也想起阿杰掉在地上的那个球。' },
+    { t:'翻来覆去睡不着，一直刷手机到一点', sub:'停不下来',
+      fx:{ energy:-12, mood:-6, study:-4 }, inf:{ dashuang:4 }, rep:-1,
+      log:'你刷到凌晨一点。<b class="neg">第二天早上，你是被闹钟吵醒的，还是被自己心跳吵醒的，说不清</b>。' }
+  ]
+},
+
+/* ============ 14. 第二天早上（收尾） ============ */
+{
+  id:'next', time:'06:30', place:'第二天 · 你的房间', bg:'home',
+  mood:{ me:{expr:'calm',pose:'half'} },
+  narr:'闹钟又响了。和昨天同一个时间，同一个声音。但你现在知道，从响到今天结束，中间有<em>十几个这样的选择</em>。',
+  cast:['me'], who:'系统提示', line:'',
+  reply:'',
+  choices:[
+    { t:'看看今天的自己变成了什么样 →', sub:'看结算', end:true }
+  ]
+}
+];
+
+
+/* ==========================================================================
+   状态与人物渲染
+   ========================================================================== */
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>');
+
+let G = null;
+
+/* ===== HUD：动态生成 + 动态量高（这是状态条曾经被盖住的根因，这里彻底修掉） ===== */
+function buildHUD(){
+  $('hud-stats').innerHTML = STATS.map(s =>
+    `<button class="hstat" id="stat-${s.k}" onclick="showStatDesc('${s.k}')" title="${s.n}">
+      <div class="hs-top"><span class="ico">${s.i}</span><span>${s.n}</span><span class="vl" id="num-${s.k}">0</span></div>
+      <div class="hs-bar"><i id="bar-${s.k}" style="width:0%;background:${s.c}"></i></div>
+    </button>`).join('');
+  measureHUD();
+}
+function measureHUD(){
+  const h = $('hud').offsetHeight;
+  document.documentElement.style.setProperty('--hudH', h + 'px');
+}
+window.addEventListener('resize', measureHUD);
+window.addEventListener('orientationchange', () => setTimeout(measureHUD, 200));
+
+function buildProgress(){
+  $('hb-progress').innerHTML = SCENES.map((s, i) =>
+    `<span class="pb ${i < G.i ? 'done' : (i === G.i ? 'now' : '')}"></span>`).join('');
+}
+
+function newGame(){
+  G = {
+    i: 0,
+    stats: { study:50, mood:60, energy:90, conf:50, rep:50 },
+    inf:  { dashuang:0, zhengkai:0, chenxiaoyu:0, laowang:0, ahao:0, mom:0, dad:0, headteacher:0, laoli:0 },
+    log: [], done: [], beats: [], silent: [],
+    phase: 'intro'
+  };
+  buildHUD();
+  buildProgress();
+  syncStats(true);
+  renderWall();
+  $('journal').style.display = 'none';
+  $('jarrow').textContent = '▸';
+  $('delta').innerHTML = '';
+  $('choices').innerHTML = '';
+  $('choices').classList.remove('on');
+  $('stage').classList.remove('on');
+  showIntro();
+}
+
+/* 面板浮层：开场 / 结算 / 属性说明 共用 */
+function openSheet(html, cls){
+  closeSheet();
+  const s = document.createElement('div');
+  s.className = 'sheet ' + (cls||'');
+  s.id = 'theSheet';
+  s.innerHTML = html;
+  document.body.appendChild(s);
+  requestAnimationFrame(() => s.classList.add('on'));
+  window.scrollTo(0,0);
+  return s;
+}
+function closeSheet(){
+  const s = $('theSheet');
+  if(s) s.remove();
+}
+
+/* ================= 开场 ================= */
+function showIntro(){
+  G.phase = 'intro';
+  openSheet(`
+  <div class="sheet-scroll">
+  <div class="intro-mark">🍄</div>
+  <div class="sc-kicker">A DAY IN CLASS 3 · GRADE 8</div>
+  <h1 class="sc-title">今 天 这 一 天</h1>
+  <p class="sc-sub">初二（3）班 · 从 06:30 到第二天 06:30</p>
+  <div class="sc-rule"></div>
+
+  <div class="sc-card">
+    <h3>这是怎样一个游戏</h3>
+    <p>一整天。<b>14 个场景，44 个选择</b>，不能存档，不能回退，不能重来。<br>
+    早上被闹钟吵醒，到第二天早上再被闹钟吵醒——中间你会遇到家里吵架、学校里的冲突、
+    一起玩的人里有不好的、被人欺负、以及你到底要不要开口。</p>
+  </div>
+
+  <div class="sc-card">
+    <h3>五个数字会跟着你走</h3>
+    <div class="stat-legend">
+      <div class="sl"><span class="sl-i" style="background:var(--blue)">📖</span><b>学业</b><span>今天学进去多少</span></div>
+      <div class="sl"><span class="sl-i" style="background:var(--gold)">💛</span><b>心情</b><span>你今天开不开心</span></div>
+      <div class="sl"><span class="sl-i" style="background:var(--green)">⚡</span><b>精力</b><span>你还剩多少力气</span></div>
+      <div class="sl"><span class="sl-i" style="background:var(--purple)">💪</span><b>自信</b><span>你敢不敢做自己</span></div>
+      <div class="sl"><span class="sl-i" style="background:var(--red)">👀</span><b>口碑</b><span>别人怎么看这个班的你</span></div>
+    </div>
+    <p style="margin-top:12px">最后那个 <b>心情</b> 最重要。如果它掉到很低——
+    那个结局不是"失败"，那是<b>求救</b>。往下看。</p>
+  </div>
+
+  <div class="sc-card">
+    <h3>还有一面"关系墙"</h3>
+    <p>班里 9 个人，每人跟你有一个距离。<br>
+    你每做一个选择，就有人往你这边来一点，或者走远一点。<br>
+    <b>有些人一直在拉你去玩，有些人一直在推你一把。</b>
+    晚上你会看到他们每一个人，最后离你有多远。</p>
+  </div>
+
+  <div class="sc-card sc-card-dark">
+    <h3>最后一句真的</h3>
+    <p>如果现实里真的有人在打你、踹你、威胁你——<b>去找一个大人</b>：老师、妈妈、爸爸，谁都行。<br><br>
+    这不是打小报告。这是<b>求救</b>。<br>
+    一个人扛着不说的那个人，才是最难的。</p>
+  </div>
+
+  <div id="resume-zone"></div>
+  <button class="btn-big" onclick="startDay()">开始这一天 ↓</button>
+  <p class="fine">建议用电脑或大平板 · 全程约 10 分钟</p>
+  </div>`, 'sheet-intro');
+
+  // 有存档就显示"继续"
+  const sv = loadGame();
+  if(sv){
+    const zone = $('resume-zone');
+    if(zone) zone.innerHTML = `
+      <div class="resume">
+        <div class="rs-t">你上次玩到了这里</div>
+        <div class="rs-b">第 ${sv.i+1} / ${SCENES.length} 场 · ${SCENES[sv.i].time} · 做了 ${sv.done.length} 个决定</div>
+        <button class="btn-big alt" onclick="resumeGame()">继续上那一次 ▶</button>
+        <button class="btn-sm" onclick="clearSave();document.getElementById('resume-zone').innerHTML=''">不想了，从头开始</button>
+      </div>`;
+  }
+}
+
+function resumeGame(){
+  const d = loadGame(); if(!d) return;
+  clearSave();
+  G.i = d.i; G.stats = d.stats; G.inf = d.inf;
+  G.log = d.log || []; G.done = d.done || [];
+  G.beats = d.beats || []; G.silent = d.silent || [];
+  closeSheet(); G.phase = 'play'; $('stage').classList.add('on');
+  syncStats(true); renderWall(); renderJournal(); render();
+}
+
+function startDay(){
+  clearSave();
+  closeSheet();
+  G.phase = 'play';
+  $('stage').classList.add('on');
+  render();
+}
+
+
+/* ========== 小音效（Web Audio，不加载任何文件） ========== */
+let AC = null;
+function beep(kind){
+  try{
+    if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state === 'suspended') AC.resume();
+    const seq = {
+      tap:   [[520,0,.06]],
+      pick:  [[440,0,.05],[660,.06,.09]],
+      good:  [[523,0,.07],[659,.07,.07],[784,.14,.13]],
+      bad:   [[320,0,.09],[240,.09,.13]],
+      end:   [[523,0,.1],[659,.1,.1],[784,.2,.1],[1046,.3,.24]]
+    }[kind] || [[440,0,.06]];
+    seq.forEach(([f,t,d])=>{
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = kind==='bad' ? 'sawtooth' : 'triangle';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0, AC.currentTime+t);
+      g.gain.linearRampToValueAtTime(0.055, AC.currentTime+t+0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+t+d);
+      o.connect(g); g.connect(AC.destination);
+      o.start(AC.currentTime+t); o.stop(AC.currentTime+t+d+0.02);
+    });
+  }catch(e){}
+}
+
+/* ================= 渲染主场景 ================= */
+let typingTimer = null, isTyping = false, ready = false;
+
+function render(){
+  const sc = SCENES[G.i];
+
+  const prevCast = document.querySelector('#frame .cast-stage'); if(prevCast) prevCast.remove();
+  $('clock').textContent = sc.time;
+  $('pidx').textContent = String(G.i+1).padStart(2,'0') + ' / ' + SCENES.length;
+  $('fplace').textContent = sc.place;
+  $('bg').innerHTML = bgSVG(sc.bg);
+  const spk = (sc.who && CAST[sc.who]) ? sc.who : null;
+  $('frame').insertAdjacentHTML('beforeend', castStage(sc.cast, spk, sc.mood));
+  buildProgress();
+
+  $('casttag').innerHTML = '';
+
+  $('narr').innerHTML = sc.narr ? sc.narr : '';
+
+  const faceK = (sc.who && CAST[sc.who]) ? sc.who : sc.cast[0];
+  $('dlg-name').textContent = sc.who || '';
+  $('dlg-face').innerHTML = faceHTML(CAST[faceK].face, 22);
+  const hasD = sc.line || sc.reply;
+  $('dlg').style.display = hasD ? 'block' : 'none';
+
+  $('choices').innerHTML = '';
+  $('choices').classList.remove('on');
+  $('delta').innerHTML = '';
+  $('continueBtn').classList.add('show');
+
+  measureHUD();
+  renderWall();
+  if(G.log.length) renderJournal();
+
+  const full = (sc.line ? sc.line : '') + (sc.reply ? (sc.line ? '\n\n' : '') + sc.reply : '');
+  typeText(full, showChoices);
+
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function typeText(full, done){
+  if(typingTimer) clearInterval(typingTimer);
+  const el = $('dlg-body');
+  isTyping = true; ready = false;
+  if(!full){ el.innerHTML = ''; isTyping = false; ready = true; done(); return; }
+  el.textContent = '';
+  const caret = document.createElement('span'); caret.className = 'caret';
+  let k = 0;
+  const total = full.length;
+  typingTimer = setInterval(() => {
+    k += Math.max(1, Math.round(total/70));
+    el.textContent = full.slice(0, k);
+    el.appendChild(caret);
+    if(k >= total){
+      clearInterval(typingTimer);
+      el.textContent = full;
+      isTyping = false; ready = true;
+      setTimeout(done, 300);
+    }
+  }, 16);
+}
+
+/* 点任意处：正在打字 → 立刻显示全文；已显示完 → 出选项 */
+function advance(){
+  if(G.phase !== 'play') return;
+  beep('tap');
+  if(isTyping){
+    if(typingTimer) clearInterval(typingTimer);
+    const sc = SCENES[G.i];
+    const full = (sc.line ? sc.line : '') + (sc.reply ? (sc.line ? '\n\n' : '') + sc.reply : '');
+    $('dlg-body').textContent = full;
+    isTyping = false; ready = true;
+    showChoices();
+    return;
+  }
+  if(!ready){ return; }
+  showChoices();
+}
+
+function showChoices(){
+  if(!ready) return;
+  ready = false;
+  $('continueBtn').classList.remove('show');
+  const sc = SCENES[G.i];
+  const box = $('choices');
+  box.innerHTML = '';
+  sc.choices.forEach((c, n) => {
+    const b = document.createElement('button');
+    b.className = 'choice';
+    b.dataset.k = String.fromCharCode(65+n);
+    const sub = c.sub ? `<small>${esc(c.sub)}</small>` : '';
+    b.innerHTML = `<b>${esc(c.t)}</b>${sub}<span class="fx">${previewFx(c)}</span>`;
+    b.onclick = ev => { ev.stopPropagation(); beep('pick'); pick(n); };
+    box.appendChild(b);
+  });
+  box.classList.add('on');
+}
+
+/* 后果预览：只说方向和大概，不给数字（保留"选了才知道有多痛"的感觉） */
+function previewFx(c){
+  const out = [];
+  const NM = { study:'学业', mood:'心情', energy:'精力', conf:'自信', rep:'口碑' };
+  if(c.fx) for(const k in c.fx){
+    const v = c.fx[k]; if(!v) continue;
+    out.push(`<i class="${v>0?'up':'dn'}">${NM[k]}${Math.abs(v)>=6?(v>0?'↑↑':'↓↓'):(v>0?'↑':'↓')}</i>`);
+  }
+  if(typeof c.rep === 'number' && c.rep && !(c.fx && c.fx.rep)){
+    out.push(`<i class="${c.rep>0?'up':'dn'}">口碑${Math.abs(c.rep)>=6?(c.rep>0?'↑↑':'↓↓'):(c.rep>0?'↑':'↓')}</i>`);
+  }
+  if(c.inf){
+    const pos = [], neg = [];
+    for(const k in c.inf){
+      const v = c.inf[k]; if(!v) continue;
+      (v>0 ? pos : neg).push(CAST[k] ? CAST[k].name : k);
+    }
+    if(pos.length) out.push(`<i class="rp">靠近 ${pos.slice(0,2).join('、')}</i>`);
+    if(neg.length) out.push(`<i class="rn">得罪 ${neg.slice(0,2).join('、')}</i>`);
+  }
+  if(!out.length) return '<i class="rp">看不出变化</i>';
+  return out.join('');
+}
+
+/* ================= 做选择 ================= */
+function pick(n){
+  if(G.phase !== 'play') return;
+  const sc = SCENES[G.i];
+  const c = sc.choices[n];
+  $('choices').classList.remove('on');
+  if(!c) return;
+  if(c.end){ showEnding(); return; }
+
+  const dstat = {};
+  if(c.fx) for(const k in c.fx){ dstat[k] = c.fx[k]; G.stats[k] = clamp(G.stats[k] + c.fx[k], 0, 100); }
+  if(typeof c.rep === 'number'){ dstat.rep = (dstat.rep||0) + c.rep; G.stats.rep = clamp(G.stats.rep + c.rep, 0, 100); }
+  if(c.inf) for(const k in c.inf){ G.inf[k] = clamp((G.inf[k]||0) + c.inf[k], -60, 80); }
+  const kb = KEY_BEATS[sc.id + ':' + n];
+  if(kb) (G.beats = G.beats || []).push(kb);
+  if(KEY_SILENT.indexOf(sc.id + ':' + n) >= 0) (G.silent = G.silent || []).push(sc.id);
+
+  if(typeof c.log === 'string'){
+    G.log.push({ t: sc.time, x: c.log });
+    G.done.push({ t: sc.time, pick: c.t });
+  }
+  syncStats(false, dstat);
+  renderWall();
+  flashDelta(dstat, c.t);
+  beep(chime(dstat));
+
+  G.i++;
+  saveGame();
+  if(G.i >= SCENES.length) showEnding();
+  else setTimeout(render, 640);
+}
+
+function chime(d){
+  const ks = Object.keys(d).filter(k => d[k]);
+  if(!ks.length) return 'tap';
+  const sum = ks.reduce((a,k)=>a+d[k],0);
+  return sum > 0 ? 'good' : 'bad';
+}
+
+/* 选完之后的过场小卡 */
+function flashDelta(d, choiceText){
+  const keys = Object.keys(d).filter(k => d[k]);
+  if(!keys.length && !choiceText) return;
+  const NM = { study:['📖','学业'], mood:['💛','心情'], energy:['⚡','精力'], conf:['💪','自信'], rep:['👀','口碑'] };
+  const s = document.createElement('div');
+  s.className = 'deltacard';
+  s.innerHTML = `<div class="dh">你选择了</div>` +
+    (choiceText ? `<div class="dp">${esc(choiceText)}</div>` : '') +
+    (keys.length ? `<div class="dd">${keys.map(k => `<span class="dl ${d[k]>0?'up':'dn'}">${NM[k][0]} ${NM[k][1]} ${d[k]>0?'+':''}${d[k]}</span>`).join('')}</div>` : '');
+  const w = $('delta');
+  w.innerHTML = '';
+  w.appendChild(s);
+  requestAnimationFrame(() => s.classList.add('on'));
+  setTimeout(() => {
+    s.classList.remove('on');
+    setTimeout(() => { if(s.parentNode) s.remove(); }, 500);
+  }, 1700);
+}
+
+/* ================= 自动存档（防误触/意外刷新） ================= */
+const SAVE_KEY = 'today-one-day-save-v1';
+function saveGame(){
+  if(!G || G.phase !== 'play') return;
+  try{
+    sessionStorage.setItem(SAVE_KEY, JSON.stringify({
+      i: G.i, stats: G.stats, inf: G.inf,
+      log: G.log, done: G.done, beats: G.beats, silent: G.silent,
+      at: Date.now()
+    }));
+  }catch(e){}
+}
+function loadGame(){
+  try{
+    const raw = sessionStorage.getItem(SAVE_KEY);
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    if(!d || typeof d.i !== 'number' || d.i < 1 || d.i >= SCENES.length) return null;
+    if(Date.now() - d.at > 6*3600*1000) return null;   // 超过 6 小时就不续了
+    return d;
+  }catch(e){ return null; }
+}
+function clearSave(){ try{ sessionStorage.removeItem(SAVE_KEY); }catch(e){} }
+
+/* ================= 状态条 ================= */
+
+/* ---------- 关键行为标记表（结局真正看的是这个，不是分数） ---------- */
+const KEY_BEATS = {
+  /* 真的去找大人处理 = told */
+  'note:0':'told',        'note:1':'told',        'note:3':'told',
+  'kicked:3':'told',      'after_school:2':'told',
+  'home:0':'told',        'nap:2':'told',
+  /* 当场说了真话，但没交给大人 = spoke */
+  'kicked:0':'spoke',     'after_school:0':'spoke',
+  'break10:2':'spoke',    'road:2':'spoke',       'morning_read:0':'spoke',
+  'breakfast:0':'spoke',  'lunch:0':'spoke',      'night:3':'spoke'
+};
+/* 一路忍着、把事情全烂在肚子里的路线 */
+const KEY_SILENT = ['note:2','kicked:2','after_school:1','home:2','nap:0','nap:1','lunch:2','bed:2'];
+
+const ENDINGS = {
+  bright:{
+    min:{ study:55, conf:60, rep:45 },
+    test:function(S){ return S.study>=55 && S.conf>=60 && S.ahao>=15 && S.rep>=45; },
+    kicker:'TWO DAYS LATER',
+    title:'你把路走直了',
+    body:'第二天早上，你比闹钟早醒了三分钟。\n\n你没有变成一个完美的人——你还是会在课间想玩游戏，还是会有一瞬间想跟大壮他们走。但你知道了三件事：<em>被踹的时候可以不动手；旁边有人被欺负可以报告老师；真的很难的时候，可以先说"对不起"或者"我不道歉"，但不能什么都不说</em>。\n\n初二下学期，你的名字从年级六十多名往前挪到了四十多名。真正改变的不是分数——是阿杰现在吃午饭会坐到你旁边。'
+  },
+  steady:{
+    test:function(S){ return S.study>=45 && S.conf>=45; },
+    kicker:'ONE MONTH LATER',
+    title:'你还在，只是稳住了',
+    body:'三十天后。\n\n你没有什么惊天动地的变化。你还是那个不太爱说话的林小满，位置在第三排靠窗。但你把数学从 68 分提到了 84 分，因为你知道哪几道题是不会的。\n\n大壮还是会喊你一起玩，你还是会有那么两秒想答应。区别是——<em>你知道了自己为什么想答应，也知道了代价是什么</em>。有时候你答应了，有时候你没答应。日子大概就是这样过的。'
+  },
+  lonely:{
+    test:function(S){ return S.rep<=35 && S.conf<=50; },
+    kicker:'ONE MONTH LATER',
+    title:'你赢了每一场，也输了所有人',
+    body:'三十天后。\n\n老师表扬你"很有主见"。你确实再没被人踹过，再没人敢当面欺负你。\n\n但是放学的时候，阿杰从你身边走过去，眼睛看着别处。大壮他们不叫你了——他们叫不叫都无所谓了，因为那群人里已经没有人觉得跟你说话有意思。\n\n<em>你不是输了，你只是一个人站着</em>。这个游戏里没有"举报一定对"的选项，只有"这次值不值"。'
+  },
+  drift:{
+    test:function(S){ return S.study<=32; },
+    kicker:'TWO MONTHS LATER',
+    title:'你把时间换成了别的东西',
+    body:'两个月后。\n\n你确实快乐过。游戏厅的招牌你认得比校门口的字还熟，群里"来不来"这三个字你不用想就按下去。\n\n成绩单发下来那天，你把它塞进了书包最里面。回家的路上你在想怎么跟妈妈说，说了三次不同的理由，一次都没说出来。\n\n<em>没有谁把你踢下坡。是你自己一级一级走下去的</em>。'
+  },
+  broken:{
+    test:function(S){ return S.mood<=28; },
+    kicker:'THAT NIGHT',
+    title:'今晚你不太想说话',
+    body:'半夜两点，你醒着，盯着天花板。\n\n你想不起今天有哪一件事是好的。也想不起明天会不会好一点。你不想跟妈妈说话，不想跟爸爸说话，不想跟任何人说话。\n\n<em>这个游戏最重要的一步，不是"打回去"或者"忍着"</em>——是<b>去找一个大人</b>。找老师，找妈妈，找爸爸，找任何一个。如果今天没有人知道这件事，那它就只在你一个人的脑子里，谁也帮不了你。'
+  },
+  silent:{
+    kicker:'THAT NIGHT',
+    title:'你谁都没告诉',
+    body:'这一天过去了。你成绩还行，你没惹麻烦，你什么都没做错。\n\n被抢走的书包，你没提。\n被踹的那一脚，你没提。\n妈妈问你怎么了，你说"没事"。\n\n<em>你想通了一件事：说出来会更麻烦，说出来会被人说告状，说出来爸妈会吵架</em>——所以你不说了。你以为你在保护自己。\n\n但这些事没有消失。它们去了别的地方——去了你晚上睡不着的那两个小时里，去了你看到他们就绕路的那个走廊里，去了你下次被人欺负时"就那样吧"的那四个字里。\n\n<em>你不是没长出嘴，你是长出嘴之后又把它收回去了</em>。'
+  },
+  mixed:{
+    kicker:'ONE MONTH LATER',
+    title:'你还在长，也没长完',
+    body:'三十天后。\n\n这一天里有你做对的，也有你做错的。你举报过阿杰的事，也偷偷看过、没吭声；你有一节晚自习做完了一整套卷子，也有一个晚上一点才睡。\n\n<em>真实的人生就是这样的</em>——不是选对一次就通关，是一天一天地选，一天一天地修正。\n明天还有一整天，还有十几个选择。'
+  }
+};
+
+const STATS = [
+  { k:'study',   i:'📖', n:'学业', c:'var(--blue)' },
+  { k:'mood',    i:'💛', n:'心情', c:'var(--gold)' },
+  { k:'energy',  i:'⚡', n:'精力', c:'var(--green)' },
+  { k:'conf',    i:'💪', n:'自信', c:'var(--purple)' },
+  { k:'rep',     i:'👀', n:'口碑', c:'var(--red)' }
+];
+const STAT_DESC = {
+  study:'你今天真的学进去的东西。它决定明天上课的时候，你能不能跟上别人。',
+  mood:'你今天开不开心。它掉到很低的时候，你可能会开始不想跟任何人说话——那不是失败，那是求救。',
+  energy:'你还剩多少力气。缺了它，学习进不去，事情也不想做。',
+  conf:'你敢不敢做自己。它长起来需要很多次"我说了真话"。',
+  rep:'别人怎么看这个班的你。注意：它高不一定好，为了对而对的人也会被叫"告状精"。'
+};
+
+let prevStats = null;
+function syncStats(silent, d){
+  STATS.forEach(s => {
+    const v = Math.round(G.stats[s.k]);
+    const bar = $('bar-' + s.k), num = $('num-' + s.k);
+    if(bar) bar.style.width = v + '%';
+    if(num) num.textContent = v;
+    if(!silent && d && d[s.k]){
+      const chip = $('stat-' + s.k);
+      if(chip){
+        chip.classList.remove('flash'); void chip.offsetWidth; chip.classList.add('flash');
+        const dt = document.createElement('span');
+        dt.className = 'hs-delta';
+        dt.style.color = d[s.k] > 0 ? '#7FD08A' : '#FF8A70';
+        dt.textContent = (d[s.k] > 0 ? '+' : '') + d[s.k];
+        chip.appendChild(dt);
+        setTimeout(() => { if(dt.parentNode) dt.remove(); }, 1400);
+      }
+    }
+  });
+  prevStats = { ...G.stats };
+  measureHUD();
+}
+
+function showStatDesc(k){
+  const s = STATS.find(x => x.k === k);
+  const v = Math.round(G.stats[k]);
+  const st = v >= 70 ? { t:'很好', c:'var(--green)' } : v >= 45 ? { t:'还行', c:'var(--gold)' } : { t:'有点低', c:'var(--red)' };
+  openSheet(`
+  <div class="sheet-scroll">
+    <div class="sdesc-top" style="background:${s.c}">
+      <div class="sdesc-ico">${s.i}</div>
+      <div class="sdesc-num">${v}<small>/100</small></div>
+      <div class="sdesc-name">${s.n}</div>
+      <div class="sdesc-state" style="background:${st.c}">${st.t}</div>
+    </div>
+    <div class="sc-card"><h3>这条是什么意思</h3><p>${STAT_DESC[k]}</p></div>
+    <button class="btn-big alt" onclick="closeSheet()">知道了</button>
+  </div>`, 'sheet-stat');
+}
+
+/* ================= 关系墙 ================= */
+const REL_DESC = {
+  dashuang:'班里最"老"的那个人。他不是坏人，他只是觉得你跟他一起玩很开心——代价是你自己的时间。',
+  zhengkai:'最会起哄的一个。他自己不一定会动手，但他一句话能让别人动手。',
+  chenxiaoyu:'学习委员。她不是真的爱管人，她是那种看到你有问题会难受的人。',
+  laowang:'数学老师。凶，不讲情面，但从不为难真的听懂的人。',
+  ahao:'刚转来的，排在最后一排。他没朋友，不是因为他不好，是因为他一个人待太久了。',
+  mom:'你妈妈。她说的每一句难听的话，前面都有一句"我是为你好"。',
+  dad:'你爸爸。他很少说话。他今天第一次跟你说了六个字。',
+  headteacher:'班主任。她说过一句话：找你不是为了告状，是为了处理这件事。',
+  laoli:'游戏厅老板。他不骗你，他只是卖你东西——而那东西刚好是你现在想要的。'
+};
+
+function renderWall(){
+  const keys = Object.keys(G.inf);
+  const met = keys.filter(k => G.inf[k] !== 0 || (CAST[k] && CAST[k].tag));
+  const shown = keys.filter(k => G.inf[k] !== 0);
+  if(!shown.length){
+    $('wall-list').innerHTML = '<span class="wnone">今天你还没跟任何人走近或走远。</span>';
+    return;
+  }
+  shown.sort((a,b) => Math.abs(G.inf[b]) - Math.abs(G.inf[a]));
+  $('wall-list').innerHTML = shown.map(k => {
+    const v = G.inf[k], c = CAST[k];
+    const pct = Math.min(100, Math.abs(v) / 60 * 100);
+    const lv = v >= 20 ? '很近' : v >= 8 ? '靠近' : v <= -20 ? '很远' : v <= -8 ? '远离' : v === 0 ? '平' : (v>0?'微近':'微远');
+    return `<button class="wrow ${v>0?'good':'bad'}" onclick="showRel('${k}')">
+      <span class="av">${faceHTML(c.face,24)}</span>
+      <span class="wn">${c.name}</span>
+      <span class="meter"><i style="width:${pct}%"></i></span>
+      <span class="lv">${lv}</span>
+      <span class="wsign">${v>0?'+':''}${v}</span></button>`;
+  }).join('');
+}
+
+function showRel(k){
+  const c = CAST[k], v = G.inf[k];
+  let verdict, vc;
+  if(v >= 20){ verdict = '他现在站在你这边。'; vc='var(--green)'; }
+  else if(v >= 8){ verdict = '他开始把你当朋友了。'; vc='var(--green)'; }
+  else if(v <= -20){ verdict = '你们之间结下了梁子。'; vc='var(--red)'; }
+  else if(v <= -8){ verdict = '他正在离你远去。'; vc='var(--red)'; }
+  else { verdict = '你们之间还是那样，不好不坏。'; vc='var(--gold)'; }
+  openSheet(`
+  <div class="sheet-scroll">
+    <div class="rel-top">
+      <div class="rel-av">${faceHTML(c.face,92)}</div>
+      <div class="rel-n">${c.name}</div>
+      <div class="rel-tag">${c.tag}</div>
+      <div class="rel-meter"><i style="width:${Math.min(100,Math.abs(v)/60*100)}%;background:${vc}"></i></div>
+      <div class="rel-v" style="color:${vc}">今天：${v>0?'+':''}${v}　<span>${verdict}</span></div>
+    </div>
+    <div class="sc-card"><h3>他/她是这样的人</h3><p>${REL_DESC[k]||'（还不知道）'}</p></div>
+    <button class="btn-big alt" onclick="closeSheet()">知道了</button>
+  </div>`, 'sheet-rel');
+}
+
+function toggleJ(){
+  const b = $('journal'), a = $('jarrow');
+  const open = b.style.display !== 'none';
+  b.style.display = open ? 'none' : 'block';
+  a.textContent = open ? '▸' : '▾';
+  if(!open) b.scrollTop = b.scrollHeight;
+}
+function renderJournal(){
+  $('journal').innerHTML = G.log.length
+    ? G.log.map(e => `<div class="jl"><span class="tm">${e.t}</span><span class="tx">${e.x}</span></div>`).join('')
+    : '<div style="color:var(--soft);font-size:12.5px">今天还没有记录。选一次就会写下一条。</div>';
+}
+function askRestart(){
+  if(G.phase === 'end'){ location.reload(); return; }
+  openSheet(`
+  <div class="sheet-scroll">
+    <div class="sc-kicker">菜单</div>
+    <h1 class="sc-title sm">要重来一次吗</h1>
+    <div class="sc-rule"></div>
+    <div class="sc-card">
+      <h3>现在的进度</h3>
+      <p>你走到了 <b>第 ${G.i+1} / ${SCENES.length} 场</b>（${SCENES[G.i] ? SCENES[G.i].time : '--'}），一共做了 <b>${G.done.length}</b> 个决定。<br>
+      重来会回到最开始——<b>这个游戏不能存档</b>，所以这一次就没了。</p>
+    </div>
+    <button class="btn-big" onclick="location.reload()">确认，从头再来</button>
+    <button class="btn-big alt" onclick="closeSheet()">继续玩，不要重来</button>
+  </div>`, 'sheet-menu');
+}
+function restart(){ location.reload(); }
+
+/* ================= 结算 ================= */
+function pickEnding(){
+  const S = G.stats, I = G.inf;
+  const told  = G.beats.filter(b => b === 'told').length;   // 把事告诉了大人
+  const spoke = G.beats.filter(b => b === 'spoke').length;  // 当面说了真话
+  const silent= G.silent.length;                            // 一路憋着没说
+  const open  = told + spoke;                               // 总共"开口"的次数
+
+  /* ① 心情见底 —— 不管别的怎么样，这一条最优先 */
+  if(S.mood <= 30) return 'broken';
+
+  /* ② 最好的结局：真找了大人 + 当面说了不 + 心情没垮 + 成绩没掉 + 口碑还在 */
+  if(told >= 2 && spoke >= 1 && S.mood >= 55 && S.study >= 52 && S.rep >= 45) return 'bright';
+  if(told >= 3 && S.mood >= 60 && S.study >= 55) return 'bright';
+
+  /* ③ 路走歪了：跟着大壮走，成绩和口碑一起掉下去 */
+  if(I.dashuang >= 14 && S.study <= 45) return 'drift';
+  if(S.study <= 42 && S.rep <= 30) return 'drift';
+  if(S.study <= 32 && I.dashuang >= 8) return 'drift';
+  if(I.dashuang >= 20 && S.study <= 42) return 'drift';
+
+  /* ④ 举报太多，全班都躲着你 */
+  if(S.rep <= 32 && told >= 3) return 'lonely';
+  if(S.rep <= 22) return 'lonely';
+
+  /* ⑤ 一件事都没说，全烂在肚子里 —— 这个游戏最想让你看见的结局 */
+  if(silent >= 3 && S.mood <= 50) return 'silent';
+  if(open === 0) return 'silent';
+  if(S.study <= 40 && silent >= 2) return 'silent';
+  if(silent >= 2 && S.mood <= 55) return 'silent';
+
+  /* ⑥ 稳住了 */
+  if(told >= 2 && S.mood >= 50) return 'steady';
+  if(S.study >= 45 && S.conf >= 45) return 'steady';
+  if(open >= 1) return 'steady';
+  return 'mixed';
+}
+
+function showEnding(forcedKey){
+  clearSave();
+  G.phase = 'end';
+  beep('end');
+  const e = ENDINGS[forcedKey || pickEnding()];
+  const S = G.stats, I = G.inf;
+
+  const bars = STATS.map(s => {
+    const v = Math.round(S[s.k]);
+    const low = v < 45;
+    return `<button class="ebar" onclick="showStatDesc('${s.k}')">
+      <span class="en">${s.i} ${s.n}</span>
+      <span class="etrack"><i style="width:${v}%;background:${s.c}"></i><em style="left:${v}%"></em></span>
+      <span class="ev ${low?'low':''}">${v}</span></button>`;
+  }).join('');
+
+  const people = Object.keys(I).map(k => {
+    const v = I[k], c = CAST[k];
+    let tag, tcls;
+    if(v >= 20){ tag = '他会站在你这边'; tcls='g'; }
+    else if(v >= 8){ tag = '你多了个朋友'; tcls='g'; }
+    else if(v <= -20){ tag = '你们结下了梁子'; tcls='r'; }
+    else if(v <= -8){ tag = '他离你远了一点'; tcls='r'; }
+    else { tag = '就那样吧'; tcls='y'; }
+    return `<button class="co" onclick="showRel('${k}')">
+      <span class="co-av">${faceHTML(c.face,46)}</span>
+      <span class="co-main"><span class="co-name">${c.name}<em class="${tcls}">${tag}</em></span>
+      <span class="co-txt">${c.tag} · 距离 ${v>0?'+':''}${v}</span></span></button>`;
+  }).join('');
+
+  const done = G.done.map((d,i) => `<div class="jt"><span class="jt-t">${d.t}</span><span class="jt-p">${d.pick}</span></div>`).join('');
+
+  openSheet(`
+  <div class="sheet-scroll">
+    <div class="end-stamp">${e.kicker}</div>
+    <h1 class="sc-title sm">${e.title}</h1>
+    <div class="sc-rule"></div>
+    <div class="sc-card"><div class="verdict">${e.body.replace(/\n/g,'<br>')}</div></div>
+
+    <div class="sc-card">
+      <h3>今天结束时的你</h3>
+      <div class="ebars">${bars}</div>
+      <p class="tiny">点任意一条，看它是什么意思</p>
+    </div>
+
+    <div class="sc-card">
+      <h3>今天你开口了几次</h3>
+      <div class="opening">
+        <div class="op-n ${G.beats.filter(x=>x==='told').length>=2?'good':''}">${G.beats.filter(x=>x==='told').length}</div>
+        <div class="op-l">次把事情告诉了大人<br><span>（老师、妈妈、爸爸，谁都行）</span></div>
+      </div>
+      <div class="opening">
+        <div class="op-n ${G.silent.length>=4?'bad':''}">${G.silent.length}</div>
+        <div class="op-l">次一个人憋着，谁都没说<br><span>${G.silent.length>=4?'这是今天最重要的一件事':'还行，不算多'}</span></div>
+      </div>
+    </div>
+
+    <div class="sc-card">
+      <h3>你今天做的 ${G.done.length} 个决定</h3>
+      <div class="jtrace">${done}</div>
+    </div>
+
+    <div class="sc-card">
+      <h3>今天围绕我的人</h3>
+      <div class="cos">${people}</div>
+    </div>
+
+    <div class="sc-card sc-card-dark">
+      <h3>最后一句真的</h3>
+      <p>如果现实里真的有人在打你、踹你、威胁你——<br>
+      <b>去找一个大人</b>：老师、妈妈、爸爸，谁都行。<br><br>
+      这不是打小报告，这是<b>求救</b>。<br>
+      一个人扛着不说的那个人，才是最难的。<br><br>
+      <span class="dim">你不用一直很厉害。你只需要在需要的时候开口。</span></p>
+    </div>
+
+    <div class="sc-card">
+      <h3>再来一次？</h3>
+      <p>同样的 14 场，44 个选择。<em>这一次你可以试试第一场就顶嘴，或者在第 9 场一脚踢回去</em>——
+      代价是完全不一样的。</p>
+    </div>
+
+    <button class="btn-big" onclick="restart()">再活一次这一天 ↺</button>
+    <p class="fine">共 ${SCENES.length} 个场景 · ${SCENES.reduce((a,s)=>a+s.choices.length,0)} 个不同选择</p>
+  </div>`, 'sheet-end');
+}
+
+/* ================= 启动 ================= */
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+function boot(){ buildHUD(); newGame(); }
+</script>
+</body>
+</html>

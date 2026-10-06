@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>草稿纸人生 · 初二(3)班</title>
+<style>
+/* ==========================================================================
+   草稿纸人生 — 一张 3 天连着用的草稿纸卷子
+   ========================================================================== */
+:root{
+  --paper:#F6F0DC;
+  --paper-2:#FFFBEF;
+  --grid:rgba(120,160,190,.20);
+  --margin:#E4908C;
+  --pen:#3A3830;
+  --pen-2:#6B675C;
+  --red:#D33F2E;
+  --blue:#2F6690;
+  --green:#3D8B57;
+  --gold:#C08A18;
+  --purple:#7A55A0;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:#CFC3A6}
+body{
+  min-height:100vh;background:#CFC3A6;color:var(--pen);
+  font-family:"Hanzipen SC","Xingkai SC","STXingkai","Kaiti SC","KaiTi","PingFang SC",sans-serif;
+  font-size:17px;line-height:1.9;-webkit-text-size-adjust:100%;overflow-x:hidden;
+}
+.paper{
+  position:relative;max-width:760px;margin:0 auto;min-height:100vh;
+  background:
+    linear-gradient(var(--grid) 1px,transparent 1px) 0 0/100% 26px,
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/26px 100%,
+    var(--paper);
+  box-shadow:0 8px 30px rgba(80,60,30,.28);
+  padding:0 18px 70px 50px;overflow:hidden;
+}
+.paper::before{content:"";position:absolute;top:0;bottom:0;left:36px;width:1.6px;background:var(--margin);opacity:.7}
+.paper::after{
+  content:"";position:absolute;top:0;left:0;bottom:0;width:36px;pointer-events:none;
+  background:
+    radial-gradient(circle at 18px 150px,rgba(190,170,130,.5) 0 7px,transparent 7px),
+    radial-gradient(circle at 18px 500px,rgba(190,170,130,.5) 0 7px,transparent 7px),
+    radial-gradient(circle at 18px 850px,rgba(190,170,130,.5) 0 7px,transparent 7px);
+}
+.tape{
+  position:absolute;top:-13px;left:50%;transform:translateX(-50%) rotate(-1.6deg);
+  width:190px;height:33px;background:rgba(255,240,180,.62);
+  border:1px dashed rgba(140,120,60,.35);z-index:5;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:#7A6A32;letter-spacing:3px;box-shadow:0 1px 3px rgba(0,0,0,.08);
+}
+.head{padding:36px 0 6px;border-bottom:2px solid rgba(58,56,48,.22)}
+.h-title{font-size:31px;letter-spacing:3px;line-height:1.25;position:relative;display:inline-block}
+.h-title::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:9px;
+  background:rgba(224,150,40,.30);z-index:-1;transform:rotate(-.6deg)}
+.h-sub{font-size:14px;color:var(--pen-2);margin-top:3px}
+.h-row{display:flex;align-items:flex-end;gap:10px;margin-top:9px;flex-wrap:wrap}
+.daystamp{border:2.5px solid var(--red);color:var(--red);border-radius:4px;padding:1px 12px;
+  font-size:16px;letter-spacing:1px;transform:rotate(-2.2deg)}
+.wk{font-size:14px;color:var(--pen-2)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:13px 0 4px}
+.stat .lab{font-size:14.5px;display:flex;align-items:baseline;gap:4px}
+.stat .lab em{font-style:normal;font-size:20px;font-weight:700;margin-left:auto}
+.stat .bar{height:12px;margin-top:2px}
+.stat .bar svg{width:100%;height:12px;display:block;overflow:visible}
+.stat .hint{font-size:11px;color:var(--pen-2);line-height:1.5}
+.friends{display:flex;flex-wrap:wrap;gap:5px 10px;margin:9px 0 2px}
+.fr{display:flex;align-items:center;gap:4px;border-bottom:1.6px dashed rgba(58,56,48,.3);padding:0 5px 1px 2px}
+.fr .av{width:28px;height:28px;flex:none;overflow:hidden}
+.fr .nm{font-size:13.5px}
+.fr .ht{font-size:12px;letter-spacing:-1px}
+
+/* 入场动画只用透明度，不用 transform。
+   原因：keepQPos 要量 .q 的位置，如果 .q 还在 translateY 动画里，量到的是动画中途的错位，
+   补滚之后动画结束内容又挪回去 —— 表现就是"每题必跳一次"。opacity 不影响布局位置。 */
+.q{margin-top:18px;position:relative;animation:fadein .3s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.q-no{position:absolute;right:0;top:-7px;font-size:13px;color:var(--pen-2);
+  border-bottom:1px solid rgba(58,56,48,.2);padding:0 2px;transform:rotate(3deg)}
+.q-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+  border-bottom:1.5px solid rgba(58,56,48,.3);padding-bottom:3px}
+.q-time{font-size:22px;font-weight:700;letter-spacing:1px}
+.q-place{font-size:16px;color:var(--blue)}
+.q-where{font-size:13px;color:var(--pen-2);margin-left:auto}
+.q-text{font-size:17.5px;line-height:2.05;margin:9px 0 2px;text-indent:2em}
+.q-text b{color:var(--red);border-bottom:2px solid rgba(211,63,46,.32)}
+.w{text-decoration:underline wavy rgba(47,102,144,.6) 1.5px;text-underline-offset:4px}
+.say{margin:12px 0 2px;display:flex;gap:8px;align-items:flex-start}
+.say .av{width:40px;height:40px;flex:none;overflow:hidden;margin-top:2px}
+.say .who{font-size:13px;color:var(--blue);line-height:1.4}
+.say .bubble{position:relative;background:var(--paper-2);border:2px solid var(--pen);
+  border-radius:12px 12px 12px 3px;padding:7px 12px 8px;box-shadow:2.5px 2.5px 0 rgba(58,56,48,.12)}
+.say .txt{font-size:16.5px;line-height:1.8;padding:0 0 0 2px}
+.sticky{margin:13px 0 0;background:#FFF0A8;box-shadow:2px 3px 6px rgba(0,0,0,.13);
+  padding:9px 12px;font-size:15.5px;line-height:1.75;transform:rotate(-.7deg);
+  border-left:4px solid rgba(200,150,40,.5)}
+.sticky b{color:var(--red)}
+.sticky.vio{background:#FFD9D2;transform:rotate(.8deg);border-left-color:var(--red)}
+.vow{background:rgba(255,240,168,.45);border:2px dashed rgba(200,150,40,.55);
+  border-radius:6px;padding:9px 12px;margin-top:13px}
+.vow .vh{font-size:13.5px;color:#8A6A20;letter-spacing:2px}
+.vow .vt{font-size:17px}
+.vow .badge{display:inline-block;font-size:12.5px;background:rgba(58,56,48,.1);
+  border-radius:10px;padding:0 8px;color:var(--pen-2);margin-left:6px;vertical-align:middle}
+
+.ans{margin-top:15px;border:2px dashed rgba(58,56,48,.3);border-radius:6px;padding:9px 11px 11px;position:relative}
+.ans::before{content:"答";position:absolute;top:-11px;left:10px;background:var(--paper);
+  padding:0 6px;font-size:13px;color:var(--pen-2);letter-spacing:2px}
+.opt{position:relative;display:flex;gap:9px;width:100%;text-align:left;font-family:inherit;
+  background:none;border:none;border-bottom:1px dotted rgba(58,56,48,.3);
+  padding:9px 6px 9px 4px;cursor:pointer;color:var(--pen);line-height:1.6}
+.opt:last-child{border-bottom:none}
+.opt:hover{background:rgba(255,252,240,.9)}
+.opt .k{width:25px;height:25px;flex:none;margin-top:1px;border:2px solid var(--pen);
+  display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--paper-2);
+  transform:rotate(-2deg)}
+.opt .tx{flex:1;min-width:0}
+.opt .tx small{display:block;font-size:13.5px;color:var(--pen-2);line-height:1.6;margin-top:1px}
+.opt .mk{width:30px;flex:none;align-self:center;font-size:25px;line-height:1;
+  opacity:0;transform:scale(.4) rotate(-25deg);transition:all .32s cubic-bezier(.3,1.7,.5,1)}
+.opt.picked{background:rgba(255,247,200,.75)}
+.opt.picked .k{background:var(--red);color:#fff;border-color:var(--red)}
+.opt.picked .mk{opacity:1;transform:none;color:var(--red)}
+.opt.wrong{opacity:.62}
+.opt.wrong .mk{opacity:1;transform:none;color:rgba(58,56,48,.35)}
+.opt.wrong .tx{text-decoration:line-through rgba(58,56,48,.45);color:rgba(58,56,48,.5)}
+.opt.wrong .k{background:rgba(58,56,48,.12)}
+.opt.lock{pointer-events:none}
+.opt .cross{position:absolute;left:0;right:0;top:50%;height:0;pointer-events:none}
+.opt .cross svg{position:absolute;left:0;right:0;top:-13px;width:100%;height:26px;overflow:visible}
+.opt .cross path{stroke:var(--red);stroke-width:2.4;fill:none;stroke-linecap:round;
+  stroke-dasharray:900;stroke-dashoffset:900;animation:cut .5s ease forwards}
+@keyframes cut{to{stroke-dashoffset:0}}
+
+.mark{margin-top:14px;border:2.5px solid var(--red);border-radius:5px;
+  background:rgba(255,246,244,.75);padding:10px 12px 12px;position:relative;animation:fadein .3s ease}
+.mark .stamp{position:absolute;right:8px;top:-12px;background:var(--red);color:#fff;
+  font-size:12px;letter-spacing:2px;padding:1px 9px;transform:rotate(-3deg)}
+.mark .cmt{font-size:17px;line-height:1.9;color:var(--red);padding-right:76px}
+.mark .dlt{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:15px;margin-top:6px;
+  padding-top:6px;border-top:1px dashed rgba(211,63,46,.4)}
+.d-up{color:var(--green)} .d-dn{color:var(--red)} .d-0{color:var(--pen-2)}
+.btn-next{display:block;width:100%;margin-top:12px;font-family:inherit;font-size:17px;
+  letter-spacing:3px;padding:10px;border:2.5px solid var(--pen);border-radius:5px;
+  background:var(--gold);color:#fff;cursor:pointer;box-shadow:3.5px 3.5px 0 rgba(58,56,48,.2)}
+.btn-next:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(58,56,48,.2)}
+
+.logbox{margin-top:20px}
+.log-h{font-size:14.5px;letter-spacing:2px;color:var(--pen-2);
+  border-bottom:1.5px dashed rgba(58,56,48,.35);padding-bottom:2px;cursor:pointer}
+.log-b{padding:6px 2px;font-size:15.5px;max-height:0;overflow:hidden;transition:max-height .3s}
+.log-b.on{max-height:280px;overflow-y:auto}
+.log-b::-webkit-scrollbar{width:6px}
+.log-b::-webkit-scrollbar-thumb{background:rgba(120,100,60,.35);border-radius:3px}
+.lg{padding:2px 0;border-bottom:1px dotted rgba(58,56,48,.2)}
+.lg .tm{color:var(--blue);font-weight:700;margin-right:5px}
+.lg .g{color:var(--green)} .lg .r{color:var(--red)}
+
+.over{position:fixed;inset:0;z-index:80;overflow-y:auto;background:#CFC3A6}
+.report{position:relative;max-width:660px;min-height:100vh;margin:0 auto;
+  padding:28px 18px 60px 50px;
+  background:linear-gradient(var(--grid) 1px,transparent 1px) 0 0/100% 26px,var(--paper);
+  box-shadow:0 0 40px rgba(60,40,10,.3)}
+.report::before{content:"";position:absolute;top:0;bottom:0;left:36px;width:1.6px;background:var(--margin);opacity:.7}
+.rp-k{text-align:center;font-size:13.5px;letter-spacing:5px;color:var(--pen-2)}
+.rp-t{text-align:center;font-size:33px;letter-spacing:2px;margin:4px 0 2px;line-height:1.35}
+.rp-line{text-align:center;color:var(--red);font-size:17.5px;line-height:1.8;margin:6px 0 16px;
+  border-bottom:1.5px solid rgba(211,63,46,.3);padding-bottom:12px}
+.rp-card{border:2px solid var(--pen);border-radius:6px;background:rgba(255,251,239,.75);
+  padding:12px 14px;margin-bottom:11px;box-shadow:3px 3px 0 rgba(58,56,48,.12)}
+.rp-card h4{font-size:15px;letter-spacing:2px;color:var(--blue);margin-bottom:5px;
+  display:flex;align-items:center;gap:6px}
+.rp-card h4::after{content:"";flex:1;height:1.4px;
+  background:repeating-linear-gradient(90deg,rgba(47,102,144,.4) 0 5px,transparent 5px 9px)}
+.rp-card p{font-size:16.5px;line-height:1.95;white-space:pre-line}
+.rp-bars{display:flex;flex-direction:column;gap:9px}
+.rpb{display:flex;align-items:center;gap:8px;font-size:15px}
+.rpb .nm{width:78px;flex:none}
+.rpb .bar{flex:1;height:13px}
+.rpb .bar svg{width:100%;height:13px;overflow:visible}
+.rpb .vl{width:32px;text-align:right;font-weight:700}
+.rank{text-align:center;font-size:16.5px;margin-top:6px;line-height:1.9}
+.grade-big{position:absolute;top:20px;right:8px;transform:rotate(13deg);
+  border:4px double var(--red);color:var(--red);font-size:22px;letter-spacing:4px;
+  padding:3px 11px;border-radius:7px;opacity:.8;background:rgba(255,251,239,.5)}
+.acts{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.big{display:block;width:100%;font-family:inherit;font-size:18px;letter-spacing:2px;padding:10px;
+  border:2.5px solid var(--pen);border-radius:5px;background:var(--red);color:#fff;
+  cursor:pointer;box-shadow:3.5px 3.5px 0 rgba(58,56,48,.2)}
+.big.alt{background:var(--paper-2);color:var(--pen)}
+.big.alt2{background:var(--gold);color:#fff}
+.big:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(58,56,48,.2)}
+
+.intro{padding-top:36px}
+.intro h2{font-size:36px;text-align:center;letter-spacing:4px;position:relative;display:inline-block}
+.intro h2::after{content:"";position:absolute;left:-4px;right:-4px;bottom:4px;height:11px;
+  background:rgba(224,150,40,.32);z-index:-1;transform:rotate(-.8deg)}
+.intro .ct{text-align:center;font-size:14.5px;color:var(--pen-2);margin:2px 0 16px}
+.paper-note{border:2px solid var(--pen);border-radius:6px;background:rgba(255,251,239,.8);
+  padding:13px 15px;margin-bottom:14px;box-shadow:4px 4px 0 rgba(58,56,48,.13);transform:rotate(-.4deg)}
+.paper-note .r{display:flex;gap:8px;font-size:16.5px;line-height:1.85;margin:4px 0}
+.paper-note .r i{font-style:normal;color:var(--red);flex:none;font-weight:700}
+.paper-note .r b{color:var(--red)}
+.tip{text-align:center;font-size:13.5px;color:var(--pen-2);margin-top:12px}
+
+@media(max-width:560px){
+  body{font-size:16px}
+  .paper,.report{padding-left:44px;padding-right:12px}
+  .paper::before,.report::before{left:30px}
+  .h-title{font-size:25px}
+  .q-time{font-size:19px}
+  .stat .lab{font-size:13px}
+  .stat .lab em{font-size:17px}
+  .rp-t{font-size:26px}
+  .mark .cmt{padding-right:0}
+  .mark .stamp{position:static;display:inline-block;transform:none;margin-bottom:5px}
+  .grade-big{position:static;display:block;width:max-content;margin:0 auto 10px;transform:rotate(-3deg);font-size:19px}
+}
+</style>
+</head>
+<body>
+<div class="paper">
+  <div class="tape">草 稿 纸 人 生</div>
+  <div id="app"></div>
+</div>
+
+<script>
+/* ==========================================================================
+   1. 简笔小人（6 发型 / 9 表情 / 6 姿势）
+   ========================================================================== */
+const SKIN=['#F6D9BE','#EFC49B','#DFA87B','#C98A5C','#F9E3CD'];
+const HAIR=['#2B2119','#3E2B1C','#141210','#5A3A22','#8B5A2B'];
+const CLOTH=['#D33F2E','#2F6690','#3D8B57','#7A55A0','#C08A18','#5A6670','#C25B8E','#3E8C8C'];
+function faceSVG(o){
+  o=o||{};
+  const skin=SKIN[(o.skin||1)%SKIN.length], hair=HAIR[(o.hair||0)%HAIR.length],
+        cloth=CLOTH[(o.cloth!==undefined?o.cloth:0)%CLOTH.length];
+  const style=o.style||'short', e=o.expr||'calm';
+  const eye=(x,y)=>{
+    if(e==='sad')   return `<path d="M${x-4} ${y-2} q4 3 8 0" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+    if(e==='shock') return `<ellipse cx="${x}" cy="${y}" rx="3.4" ry="4.4" fill="#fff" stroke="#1E1A16" stroke-width="1.8"/><circle cx="${x}" cy="${y+1}" r="1.9" fill="#1E1A16"/>`;
+    if(e==='evil'||e==='angry') return `<path d="M${x-4} ${y+2} l8 -4" stroke="#1E1A16" stroke-width="2.4" stroke-linecap="round"/>`;
+    if(e==='tired') return `<path d="M${x-4} ${y} h8" stroke="#1E1A16" stroke-width="2.2" stroke-linecap="round"/><path d="M${x-4} ${y-4.5} q4 -2 8 0" stroke="#1E1A16" stroke-width="1.5" fill="none"/>`;
+    if(e==='grin')  return `<path d="M${x-4} ${y} q4 5 8 0" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+    return `<ellipse cx="${x}" cy="${y}" rx="3.1" ry="3.9" fill="#fff" stroke="#1E1A16" stroke-width="1.8"/><circle cx="${x}" cy="${y+.6}" r="1.8" fill="#1E1A16"/>`;
+  };
+  const brow=(x,y,t)=>`<path d="${t<0?`M${x-5} ${y-2} l10 2`:`M${x-5} ${y+2} l10 -2`}" stroke="#1E1A16" stroke-width="2" fill="none" stroke-linecap="round" opacity=".85"/>`;
+  let eyes=eye(19,34)+eye(37,34), brows='';
+  if(e==='angry'||e==='evil') brows=brow(19,26,-1)+brow(37,26,-1);
+  if(e==='sad'||e==='shock') brows=brow(19,25,1)+brow(37,25,1);
+  let mouth='';
+  if(e==='smile') mouth=`<path d="M22 45 q6 5 12 0" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  if(e==='grin')  mouth=`<path d="M20 44 q8 9 16 0 z" fill="#7A3B33" stroke="#1E1A16" stroke-width="1.8" stroke-linejoin="round"/><path d="M23 44 h10" stroke="#1E1A16" stroke-width="1.4"/>`;
+  if(e==='sad')   mouth=`<path d="M22 48 q6 -5 12 0" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  if(e==='angry') mouth=`<path d="M21 48 q7 -4 14 0" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  if(e==='shock') mouth=`<ellipse cx="28" cy="47" rx="3.6" ry="4.6" fill="#7A3B33" stroke="#1E1A16" stroke-width="1.7"/>`;
+  if(e==='evil')  mouth=`<path d="M20 46 q8 7 16 0" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M24 46 l1.6 3 l1.6 -3 l1.6 3 l1.6 -3" fill="#1E1A16"/>`;
+  if(e==='tired') mouth=`<path d="M23 47 h10" stroke="#1E1A16" stroke-width="2.2" stroke-linecap="round"/>`;
+  let hairS=`<path d="M13 33 q0 -19 15 -19 q15 0 15 19 q-4 -9 -15 -8 q-11 -1 -15 8 z" fill="${hair}"/>`;
+  if(style==='buzz')  hairS=`<path d="M14 30 q1 -16 14 -16 q13 0 14 16 q-5 -7 -14 -6 q-9 -1 -14 6 z" fill="${hair}"/>`;
+  if(style==='long')  hairS=`<path d="M12 36 q-1 -22 16 -22 q17 0 16 22 l-4 24 l-4 -6 l-1 -18 q-4 4 -11 3 q-7 1 -11 -3 l-1 18 l-4 6 z" fill="${hair}"/>`;
+  if(style==='twin')  hairS=`<circle cx="8" cy="30" r="6" fill="${hair}"/><circle cx="48" cy="30" r="6" fill="${hair}"/>`+hairS;
+  if(style==='curly') hairS=`<circle cx="13" cy="20" r="7" fill="${hair}"/><circle cx="24" cy="13" r="8" fill="${hair}"/><circle cx="38" cy="13" r="8" fill="${hair}"/><circle cx="49" cy="21" r="7" fill="${hair}"/>`+hairS;
+  if(style==='cap')   hairS=hairS+`<path d="M11 26 q0 -16 17 -16 q17 0 17 15 l-34 1 z" fill="${cloth}"/><path d="M45 25 l7 4 l-7 1 z" fill="${cloth}"/>`;
+  if(style==='hood')  hairS=hairS+`<path d="M8 40 q0 -26 20 -26 q20 0 20 26 l-4 -2 q0 -20 -16 -20 q-16 0 -16 20 z" fill="${cloth}"/>`;
+  if(style!=='cap'&&style!=='hood') hairS=hairS+`<path d="M13 33 q0 -19 15 -19 q15 0 15 19 q-4 -9 -15 -8 q-11 -1 -15 8 z" fill="${hair}"/>`;
+  const pose=o.pose||'stand';
+  const torso=`<path d="M18 60 h20 q7 0 7 8 v16 h-34 v-16 q0 -8 7 -8 z" fill="${cloth}" stroke="#1E1A16" stroke-width="2.2"/>`;
+  let body='';
+  if(pose==='stand') body=torso+`<path d="M18 66 q-7 8 -7 18" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M38 66 q7 8 7 18" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M18 66 q-6 9 -6 18 l6 1 z" fill="${skin}" stroke="#1E1A16" stroke-width="1.8"/><path d="M38 66 q6 9 6 18 l-6 1 z" fill="${skin}" stroke="#1E1A16" stroke-width="1.8"/>`;
+  if(pose==='arms') body=torso+`<path d="M17 66 q-6 10 0 17" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M39 66 q6 10 0 17" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  if(pose==='point') body=torso+`<path d="M39 68 q14 -4 17 -12" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M55 54 q4 -2 5 2 q-1 4 -6 4 z" fill="${skin}" stroke="#1E1A16" stroke-width="1.8"/>`;
+  if(pose==='shrug') body=torso+`<path d="M18 67 q-9 2 -8 10" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M38 67 q9 2 8 10" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M9 76 q-4 3 1 5" stroke="#1E1A16" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  if(pose==='hold') body=torso+`<path d="M18 67 q-7 6 -4 11" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M38 67 q7 6 4 11" stroke="#1E1A16" stroke-width="2.4" fill="none" stroke-linecap="round"/><rect x="16" y="73" width="24" height="15" rx="2" fill="#FFFBEF" stroke="#1E1A16" stroke-width="2"/><path d="M20 78 h16M20 82 h12" stroke="#B8A882" stroke-width="1.4"/>`;
+  if(pose==='sit') body=torso+`<path d="M20 84 v5 M36 84 v5" stroke="#1E1A16" stroke-width="2.6" stroke-linecap="round"/><rect x="8" y="88" width="40" height="6" rx="2" fill="${cloth}" stroke="#1E1A16" stroke-width="2"/>`;
+  let extra='';
+  if(e==='shock'||e==='evil') extra+=`<path d="M46 40 q3 3 0 5" stroke="#7FB7D8" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  if(o.sweat) extra+=`<ellipse cx="45" cy="38" rx="3" ry="4.5" fill="#8FC7E8" stroke="#1E1A16" stroke-width="1.4"/>`;
+  return `<svg viewBox="0 0 56 96" xmlns="http://www.w3.org/2000/svg"><g>${body}</g><g>
+    <rect x="10" y="14" width="36" height="42" rx="17" fill="${skin}" stroke="#1E1A16" stroke-width="2.2"/>
+    ${hairS}${eyes}${brows}${mouth}
+    <ellipse cx="16" cy="42" rx="3.4" ry="2.2" fill="#E89A8A" opacity=".5"/>
+    <ellipse cx="40" cy="42" rx="3.4" ry="2.2" fill="#E89A8A" opacity=".5"/>${extra}</g></svg>`;
+}
+function faceHTML(o,px){
+  return `<span style="display:block;width:${px}px;height:${px}px;overflow:hidden">`+
+    faceSVG(o).replace('<svg','<svg width="'+px+'" height="'+px+'"')+`</span>`;
+}
+
+/* ==========================================================================
+   2. 人物
+   ========================================================================== */
+const CHARS={
+  me:      {n:'我',     face:{skin:1,hair:0,style:'twin',cloth:0}},
+  adou:    {n:'阿豆',   face:{skin:0,hair:3,style:'buzz',cloth:6,pose:'shrug'}},
+  xiaoman: {n:'林小满', face:{skin:4,hair:0,style:'twin',cloth:1,pose:'hold'}},
+  suqing:  {n:'苏晴',   face:{skin:4,hair:1,style:'long',cloth:4,pose:'sit'}},
+  wang:    {n:'王老师', face:{skin:2,hair:2,style:'short',cloth:5,expr:'tired'}},
+  mom:     {n:'妈妈',   face:{skin:2,hair:1,style:'curly',cloth:3,expr:'tired'}},
+  dad:     {n:'爸爸',   face:{skin:0,hair:2,style:'short',cloth:5,expr:'smile'}},
+  tao:     {n:'体育委员',face:{skin:4,hair:2,style:'short',cloth:2,expr:'grin',pose:'arms'}}
+};
+const REL_KEYS=['adou','xiaoman','suqing','wang'];
+
+/* ==========================================================================
+   3. 开局身份
+   ========================================================================== */
+const STARTS=[
+  {k:'A',t:'稳一点的优等生',s:'排位靠前，但没什么朋友',
+   score:70,mood:52,rel:{adou:40,xiaoman:58,suqing:62,wang:64}},
+  {k:'B',t:'普普通通的学生',s:'不出错，也不出彩',
+   score:60,mood:56,rel:{adou:55,xiaoman:50,suqing:48,wang:50}},
+  {k:'C',t:'坐最后一排的调皮鬼',s:'热闹是一天天过的',
+   score:50,mood:74,rel:{adou:74,xiaoman:38,suqing:40,wang:34}}
+];
+
+/* ==========================================================================
+   4. 剧情
+   ========================================================================== */
+const DAYS=[
+{title:'星期一',sub:'开学第三周 · 上课铃响之前',scenes:[
+  {t:'06:40',place:'卧室',where:'家',
+   text:'闹钟响了第一遍。你的<span class="w">眼皮有 400 斤重</span>，被窝里很暖，窗外有人在楼下练晨跑。',
+   say:{who:'mom',expr:'tired',txt:'六点四十了。你是想让我端着早饭进屋喂你吗？'},
+   opts:[
+    {t:'再赖十分钟',s:'就十分钟……',
+     eff:{score:0,mood:6,rel:{mom:-3}},log:'在被窝里又躺了十分钟，听完了一整首歌。',
+     red:'十分钟很长。但你确实还小。'},
+    {t:'一骨碌爬起来，跑步上学',s:'早到能抢到靠窗第一排',
+     eff:{score:2,mood:-2,rel:{mom:5}},log:'一骨碌爬起来，一路跑着进了校门。',
+     red:'早起两分。妈妈记住了你今天是自己起的。'},
+    {t:'按掉闹钟，赌她不叫我',s:'赌输概率 87%',
+     eff:{score:-1,mood:4,rel:{mom:-5}},log:'赌输了。穿着拖鞋冲下楼，被三楼的邻居阿姨看见了。',
+     red:'三楼的阿姨会记住你一个月。'}
+   ]},
+
+  {t:'07:35',place:'小卖部门口',where:'上学路上',
+   text:'阿豆蹲在路边啃面包，一看见你就跳起来：<b>“你昨天王者打到几点？”</b>他眼睛里有一种你没见过的光。',
+   say:{who:'adou',expr:'grin',pose:'point',txt:'两点了！最后一波我差点翻盘——就差一点！'},
+   opts:[
+    {t:'跟他一路聊王者聊到校门口',s:'开心，但英语没背',
+     eff:{score:-1,mood:8,rel:{adou:8}},log:'和阿豆一路聊游戏，进校门时单词一个没背。',
+     red:'快乐 +8。阿豆觉得你懂他。可单词不会因为你快乐就自己记住。'},
+    {t:'边走边背英语，背 20 个',s:'他翻了你三次白眼',
+     eff:{score:4,mood:-3,rel:{adou:-2}},log:'背了 20 个单词。阿豆说你像机器人。',
+     red:'20 个单词是实打实的。他记住的是你像机器人。'},
+    {t:'顺手把他没写的物理作业借来抄',s:'他很开心，你迟交',
+     eff:{score:2,mood:2,rel:{adou:6},flag:'hwcopy'},log:'抄了阿豆的物理作业，上课迟到了两分钟。',
+     red:'作业是抄的。他会记你一份好，以后天天问你借。'}
+   ]},
+
+  {t:'08:20',place:'教室',where:'早读',
+   text:'王老师站在讲台上，手里一叠默写本，在抽人。三十七双眼睛齐刷刷低头——<b>今天默写《岳阳楼记》。</b>',
+   say:{who:'wang',expr:'tired',txt:'我随机抽三个。苏晴，你先。'},
+   opts:[
+    {t:'偷偷把书立起来挡住脸',s:'希望能躲过去',
+     eff:{score:-1,mood:2},log:'把语文书立得像块盾牌，挡了一整节早读。',
+     red:'书挡得住脸，挡不住点名。'},
+    {t:'低头认真念，默写也认真写',s:'无聊，但管用',
+     eff:{score:4,mood:-2,rel:{wang:3}},log:'早读认真念，默写本写得工工整整。',
+     red:'无聊的事做久了就不无聊了。这是你第一个能长期兑现的选项。'},
+    {t:'举手，下意识抄同桌的答案',s:'你手比脑子快',
+     eff:{score:1,rel:{suqing:-4,wang:-7},flag:'cheat',attn:1},gate:'cheat',log:'手比脑子快，抄了前桌的答案。前桌是苏晴。',
+     red:'苏晴没吭声。这件事她记下了，而且是往心里记的那种。'}
+   ]},
+
+  {t:'10:05',place:'走廊',where:'课间',
+   text:'离上课还有八分钟。阿豆神秘兮兮地掏出一张<b>折了四折的小纸片</b>——物理选择题，答案全在上面。整条走廊都在传。\n王老师办公室的门，开着一条缝。',
+   say:{who:'adou',expr:'evil',pose:'shrug',txt:'“抄不抄？我这份最全。你不抄我就把你上次物理 38 分告诉全班。”'},
+   opts:[
+    {t:'伸手接过来，抄！',s:'速度要快，字要小',
+     eff:{score:4,mood:6,rel:{adou:11,wang:-9,xiaoman:-4},flag:'cheat',attn:1},gate:'cheat',
+     log:'在走廊上抄了整张物理小抄，老师出门的时候我假装看手机。',
+     red:'这一抄，物理从 38 变成 78。你和阿豆的账本上又多了一笔。'},
+    {t:'摇头："你自己抄，我去接水。"',s:'不给别人惹麻烦',
+     eff:{score:-1,mood:-3,rel:{adou:-7,xiaoman:6,wang:2}},log:'拒绝了阿豆，转身去接水。回来时他不太理你。',
+     red:'全班都会知道阿豆被拒绝了。他会记很久。'},
+    {t:'"抄可以。你也帮我抄明天英语的。"',s:'谈条件',
+     eff:{score:2,mood:4,rel:{adou:7,wang:-6},flag:'cheat',attn:1},gate:'cheat',
+     log:'和阿豆谈成了"互抄联盟"。两败俱伤的好日子开始了。',
+     red:'互抄联盟。初二最有名的一个组织，也是最有名的一颗雷。'},
+    {t:'故意大声念题干，让老师听见',s:'提醒他收手',
+     eff:{score:-1,mood:-4,rel:{adou:-12,wang:13,xiaoman:5}},log:'你大声把题目念了一遍。走廊安静了。阿豆恨了你一个礼拜。',
+     red:'全班记住你。他是全校最讨厌你的人，你是全班最仗义的人。二选一，没有好选项。'}
+   ]},
+
+  {t:'12:10',place:'食堂二楼',where:'午饭',
+   text:'二楼最挤，队伍拐了三个弯，空气里全是红烧肉味。<b>今天阿豆生日</b>——他昨晚在群里说了一半，就被人刷过去了。',
+   opts:[
+    {t:'跟阿豆挤到一张桌，AA 吃面',s:'便宜，他最在意这个',
+     eff:{mood:7,rel:{adou:12},score:-1},log:'和阿豆挤到角落，一人一份牛肉面。他讲笑话笑了十分钟。',
+     red:'他生日你记着。比任何东西都记得清楚。'},
+    {t:'帮林小满带份鸡腿饭，坐她那边',s:'她刚帮过你值日',
+     eff:{mood:3,rel:{xiaoman:9}},log:'帮班长带了饭。吃饭时她问了你三个学习问题。',
+     red:'班长记得你帮过她。她以后会帮你——但有限度。'},
+    {t:'端着饭回教室，一个人边吃边背单词',s:'安静',
+     eff:{score:4,mood:-3},log:'一个人回教室吃饭，背了 30 个单词。',
+     red:'30 个单词和一个空教室。有些安静是你自己选的。'}
+   ]},
+
+  {t:'14:30',place:'操场',where:'体育课',
+   text:'自由活动。男生打篮球，女生跳绳。你站在圈外——<b>上周崴了脚，体育委员正举着手看你</b>。',
+   say:{who:'tao',expr:'grin',pose:'arms',txt:'喂！那个红衣服的！来当记录员！不记名字的，就数个儿！'},
+   opts:[
+    {t:'去当记录员',s:'轻松，没人问你会不会打球',
+     eff:{score:1,mood:4,rel:{xiaoman:5}},log:'去当了记录员，站在场边数了一下午。',
+     red:'你在场边看了一下午球，也被人记住了一下午。'},
+    {t:'加入篮球赛',s:'崴过的脚不该再上了',
+     eff:{mood:8,score:-1,rel:{adou:3},flag:'sport'},log:'上场打球，被盖帽三次，笑得比谁都开心。',
+     red:'快乐不需要理由。但你的脚记得崴过一次。'},
+    {t:'借口不舒服，回教室睡觉',s:'一节体育课很值',
+     eff:{mood:7,score:-2,rel:{wang:-2}},log:'回教室睡了 45 分钟，梦里在打排位。',
+     red:'体育课是"不准请假"的那种。你需要一个好点的理由。'}
+   ]},
+
+  {t:'16:20',place:'教室',where:'放学 · 值日',
+   text:'今天轮到你们组值日。教室只剩 5 个人，黑板没擦，投影仪的线缠成一团。',
+   say:{who:'xiaoman',expr:'calm',pose:'hold',txt:'黑板谁擦？没人应我记名字了哦。'},
+   opts:[
+    {t:'留下来擦完黑板再走',s:'晚 15 分钟到家',
+     eff:{score:2,mood:-2,rel:{xiaoman:10,wang:3}},log:'留下来擦完黑板、摆好桌椅。班长在名单上给你画了个勾。',
+     red:'名单上那个勾，比考 90 分还有用。'},
+    {t:'趁没人注意，从后门溜了',s:'跑得挺快',
+     eff:{mood:5,rel:{xiaoman:-11,wang:-4},flag:'flee'},log:'从后门溜了。第二天班长还是知道了。',
+     red:'她知道的方式是：有人看见你溜，也有人知道你溜。'},
+    {t:'帮苏晴搬作业本去办公室',s:'顺便聊两句',
+     eff:{score:1,rel:{suqing:10},flag:'clean'},log:'帮苏晴把作业本搬到办公室，聊了两句她家里的事。',
+     red:'她今天话比平时多。你大概不知道这意味着什么。'}
+   ]},
+
+  {t:'19:40',place:'卧室',where:'家 · 晚上',
+   text:'作业摊在书桌上。手机在旁边亮了一下——<b>阿豆：组队吗？5 秒后就是开局倒计时。</b>\n妈妈在客厅看电视，爸爸在刷手机。墙上的钟指向七点四十。',
+   say:{who:'mom',expr:'tired',txt:'别玩太晚。九点半我关灯，你自己看着办。'},
+   opts:[
+    {t:'写作业，写完再玩',s:'可能会写很久',
+     eff:{score:5,mood:-4},log:'安安静静写完作业，笔尖在纸上沙沙响。',
+     red:'先苦后甜。但九点半的灯不等人。',
+     vow:{t:'明天早十分钟到校复习',tag:'明天：早到复习',bonus:{score:3}}},
+    {t:'打两小时王者',s:'今天作业明早抄',
+     eff:{score:-4,mood:16,rel:{adou:6},flag:'game'},log:'打了两小时王者，赢了 5 把输了 3 把，作业一个字没动。',
+     red:'赢了 5 把，输了整晚。有些账不是用胜负算的。',
+     vow:{t:'明天再也不碰游戏了',tag:'明天：不碰游戏',bonus:{score:2,mood:-3}}},
+    {t:'看一本课外书《昆虫记》',s:'不是作业，但真的好看',
+     eff:{score:3,mood:6},log:'看了 40 页《昆虫记》，看到萤火虫那段笑出声。',
+     red:'读书的回报是延迟的，但它比游戏久。',
+     vow:{t:'明天课间接着看这本书',tag:'明天：继续读书',bonus:{score:2,mood:2}}},
+    {t:'戴着耳机偷玩到十二点',s:'妈妈睡着以后',
+     eff:{score:-3,mood:10,rel:{mom:-9,dad:-2},flag:'late'},log:'戴着耳机玩到十二点。第二天早上眼睛是肿的。',
+     red:'凌晨的快乐最贵。第二天你会连着还三天。',
+     vow:{t:'明天中午要睡一小时补回来',tag:'明天：中午补觉',bonus:{mood:5,score:-2}}}
+   ]}
+]},
+
+{title:'星期三',sub:'月考前一晚 · 全班平均分 58',scenes:[
+  {t:'06:50',place:'卧室',where:'家',vowNote:true,
+   text:'昨晚的账今天早上要还。<b>闹钟响的时候，你是睁眼第一秒就想哭，还是一骨碌爬起来？</b>',
+   opts:[
+    {t:'硬撑着起来，今天有月考',s:'不能请假',
+     eff:{score:2,mood:-3},log:'顶着一对黑眼圈起床，月考还坐在第一排。',
+     red:'你困得要死，但你没缺考。这也���一种坚持。',
+     vow:{t:'今晚要早点睡',tag:'今晚：早睡',bonus:{mood:6}}},
+    {t:'装肚子疼，请假一天在家补觉',s:'月考就考不成了',
+     eff:{score:-12,mood:14,rel:{mom:-6,wang:-9},flag:'absent'},log:'装病请假，在家睡到中午。错过了月考。',
+     red:'十四分的舒服，十二分的窟窿。这个换算不划算，但你今天不知道。',
+     vow:{t:'明天一定去上学',tag:'明天：一定上学',bonus:{score:3}}},
+    {t:'早到校，把昨晚的债补上',s:'今天会很难受',
+     eff:{score:5,mood:-5},log:'提前一小时到校，把昨晚没写的补了一半。',
+     red:'补了一半。另一半要用这周的分数还。',
+     vow:{t:'今晚把剩下的补完',tag:'今晚：补完作业',bonus:{score:4}}}
+   ]},
+
+  {t:'09:00',place:'教室',where:'第一节 · 数学',
+   text:'数学老师抱着一叠卷子进门，脸色不好看。<b>上周小测，全班平均 58 分，年级倒数。</b>',
+   say:{who:'wang',expr:'angry',txt:'58 分。知道隔壁班多少吗？71。差在哪，你们自己说。'},
+   opts:[
+    {t:'低头，一句话不说',s:'千万别点我',
+     eff:{score:0,mood:-5,rel:{wang:-2}},log:'低头盯着桌子，装作自己在找笔。',
+     red:'沉默是合理反应，也是最容易被记住的反应。'},
+    {t:'举手："老师，题目太难了。"',s:'全班都看你',
+     eff:{score:-1,mood:2,rel:{wang:-8,xiaoman:-3}},log:'举手说了这句话。教室里安静了三秒。',
+     red:'全班记住了这一秒。老师也记住了，而且是"那个小孩"。'},
+    {t:'举手："我想知道我错在哪，我把错题抄一份给您。"',s:'有点难堪',
+     eff:{score:2,mood:-2,rel:{wang:9}},log:'举了手，说要抄错题给老师看。班主任的表情变了。',
+     red:'全班都在笑你。但老师记住了你的名字，是好的那种记。'}
+   ]},
+
+  {t:'10:40',place:'教室',where:'课间',
+   text:'阿豆凑过来压低声音：<b>"今天下午物理小测，我还没背。你帮我想想，抄我一下。"</b>\n他的手掌摊开，里面是一张写满数字的纸条。',
+   say:{who:'adou',expr:'sad',pose:'shrug',txt:'"就这一次。我昨晚背了两小时，一个字没记住。"'},
+   opts:[
+    {t:'把你的答案给他',s:'兄弟就是这样',
+     eff:{score:1,mood:3,rel:{adou:14,wang:-8},flag:'cheat',attn:1},gate:'cheat',
+     log:'把你的物理答案给了阿豆。他考了 91，你没被看见。',
+     red:'他记你一辈子。你也瞒了一件不小的事。'},
+    {t:'不给："我也不会，我们一起做错。"',s:'他可能会不高兴',
+     eff:{score:2,mood:1,rel:{adou:-5,wang:2}},log:'拒绝了阿豆。两个人一起做，做出来三道对的。',
+     red:'你失去了朋友的两分钟，和三道真正会了的题。'},
+    {t:'"你先说哪道不会，我教你。"',s:'要花十分钟',
+     eff:{score:1,mood:3,rel:{adou:12,suqing:2}},log:'花了十分钟给阿豆讲了一道题。他懂了。',
+     red:'十分钟的真心比一张纸贵得多，而且不会被查到。'}
+   ]},
+
+  {t:'12:00',place:'食堂一楼',where:'午饭',
+   text:'你端着饭找位子，看见<b>林小满一个人坐在角落，面前摆着两份饭</b>。她在等一个人，那个人没来。',
+   opts:[
+    {t:'过去坐下，问她要不要一起吃',s:'你不认识那个位置的人',
+     eff:{mood:4,rel:{xiaoman:8}},log:'坐过去和她一起吃。她说那个人今天转学了。',
+     red:'她记住了你在一张没人坐的桌子上。'},
+    {t:'假装没看见，找别的桌',s:'不惹麻烦',
+     eff:{mood:-2,rel:{xiaoman:-3}},log:'假装没看见，在别的桌吃完了。',
+     red:'这种时刻不记在分数上，但会记在别处。'},
+    {t:'把自己多的那份排骨夹给她',s:'然后你只吃素',
+     eff:{mood:6,rel:{xiaoman:6},score:-1},log:'把排骨都夹给了她。她愣了一下，说了声谢谢。',
+     red:'午饭吃不饱的下午，会在第三节课找补回来。'}
+   ]},
+
+  {t:'14:20',place:'走廊',where:'午休',
+   text:'午休时间。有人在传：<b>班主任下午要找三个"特别需要谈谈"的学生</b>，名单第三节课后公布。',
+   opts:[
+    {t:'去找苏晴借笔记，把两道不会的弄懂',s:'她中午一般有空',
+     eff:{score:3,mood:2,rel:{suqing:9}},log:'找苏晴借了笔记，弄懂了两道题。她说"这个你确实不会"。',
+     red:'她说得很直。但她愿意花时间，这比委婉重要。'},
+    {t:'回教室睡一觉，养足精神',s:'下午要应付事',
+     eff:{mood:6,score:-1},log:'回教室睡了 25 分钟。',
+     red:'有些体力是脑子看不见的资源。'},
+    {t:'去小卖部买两包辣条，跟阿豆一起吃',s:'押一把',
+     eff:{mood:8,score:-1,rel:{adou:6}},log:'买了两包辣条，和阿豆在楼梯间吃完了。',
+     red:'辣条的快乐是即时结算的。它真的有用，只是不记账。'}
+   ]},
+
+  {t:'16:15',place:'办公室外',where:'放学',
+   text:'门口贴着三张纸条，是要找谈话的学生。\n你看到<b>第二个名字是自己的</b>。',
+   say:{who:'wang',expr:'calm',txt:'进来吧。门关上。'},
+   opts:[
+    {t:'进去，如实说：早读那次是我抄的',s:'会很难看',
+     eff:{score:-1,mood:-3,rel:{wang:14,xiaoman:6},flag:'confess'},log:'在办公室承认了早读抄答案的事。班主任听完说"我知道"。',
+     red:'她早就知道了。她等你自己说，说的是"我信任你"。'},
+    {t:'进去，矢口否认',s:'她未必信',
+     eff:{score:0,mood:2,rel:{wang:-6}},log:'说不是自己。班主任盯着你看了三秒，说"那你去吧"。',
+     red:'她没信。信用不是分数，扣起来比分快。'},
+    {t:'装作路过，绕开办公室',s:'今天结束了',
+     eff:{score:0,mood:-1,rel:{wang:-3}},log:'从后楼梯绕出了教学楼。',
+     red:'躲得过今天，躲不过期末，躲不过你自己。'}
+   ]},
+
+  {t:'19:20',place:'卧室',where:'家 · 晚上',
+   text:'月考前一夜。书桌上摊着三本复习资料。手机在抽屉里<b>震了一下，是阿豆：「明天中午一起吃饭，我请。」</b>',
+   opts:[
+    {t:'按科目复习，把不会的做成一张表',s:'要熬到一点',
+     eff:{score:8,mood:-5},log:'熬到一点，把所有不会的做成了三张表。',
+     red:'三张表是明天最值钱的东西。五个黑眼圈也是。',
+     vow:{t:'考完要跟同学对答案',tag:'明天：对答案',bonus:{score:2,rel:{adou:3}}}},
+    {t:'只复习物理（明天就考物理）',s:'短平快',
+     eff:{score:5,mood:-1},log:'只复习了物理，做了 18 道。',
+     red:'押题是一种聪明，也是一种侥幸。',
+     vow:{t:'考试时不慌，把会的先做',tag:'明天：先做会的',bonus:{score:3}}},
+    {t:'早点睡，明天靠临场',s:'把状态留给考场',
+     eff:{score:2,mood:8},log:'十点半就睡了，睡了九个半小时，一夜没做梦。',
+     red:'睡眠是分数的一部分，也是最不显眼的那部分。',
+     vow:{t:'明天要精神抖擞进考场',tag:'明天：状态优先',bonus:{score:3,mood:2}}},
+    {t:'偷玩到一点再睡',s:'明天会难受',
+     eff:{score:-2,mood:9,rel:{mom:-4},flag:'late'},log:'偷玩到一点。躺下的时候脑子还在转。',
+     red:'你今晚赢了。明天上午会把这一小时还回去，利息很高。'}
+   ]}
+]},
+
+{title:'星期五',sub:'月考日 + 周末 · 成绩条今天贴出来',scenes:[
+  {t:'07:10',place:'教室',where:'早读前',vowNote:true,
+   text:'今天月考。早读老师没来，教室里一片<b>翻资料的沙沙声</b>和压不住的咳嗽声。',
+   opts:[
+    {t:'把昨晚的东西再过一遍',s:'提前 40 分钟到',
+     eff:{score:4,mood:-2},log:'提前到校，又过了一遍。',
+     red:'过一遍比看三遍有用。你已经开始懂了。',
+     vow:{t:'考完检查两遍再交卷',tag:'今天：检查两遍',bonus:{score:3}}},
+    {t:'什么都不做，闭眼歇一会儿',s:'养神',
+     eff:{mood:6,score:-1},log:'闭眼歇了 20 分钟。',
+     red:'清醒比什么都重要。这是很多学生一辈子学不会的事。',
+     vow:{t:'考场上先做有把握的题',tag:'今天：先做有把握的',bonus:{score:3}}},
+    {t:'跟阿豆互相打气',s:'他也很慌',
+     eff:{mood:5,rel:{adou:7},score:-1},log:'和阿豆互相打气，两个人都有点抖。',
+     red:'两个人一起害怕，比一个人害怕好用一点。',
+     vow:{t:'中午请他吃饭',tag:'今天：中午请客',bonus:{rel:{adou:6},mood:2}}}
+   ]},
+
+  {t:'09:00',place:'教室',where:'月考 · 第一科',
+   text:'监考老师开始发卷子：<b>“手机全部交讲台，包括我的。”</b>前桌是苏晴，她答题很快。',
+   say:{who:'wang',expr:'calm',txt:'开始。写完立刻停笔，不许说话，不许抬头。'},
+   opts:[
+    {t:'老老实实写，不看任何人',s:'慢一点，但都对',
+     eff:{score:6,mood:3,rel:{wang:6,suqing:2}},log:'老老实实写完了。交卷时手心有汗。',
+     red:'你靠自己拿了 6 分。这三天里最干净的一笔收入。',
+     vow:{t:'下一科也要这样',tag:'下一科：自己写',bonus:{score:4}}},
+    {t:'写完之前，瞄一眼前桌苏晴的',s:'她写得很慢',
+     eff:{score:3,rel:{wang:-13,suqing:-14,xiaoman:-6},flag:'cheat',attn:1},gate:'cheat',
+     log:'偷瞄了苏晴的卷子。监考老师看见了，考场安静了三秒。',
+     red:'三秒的安静比一整天的口哨都响。你今天学到的是"被抓"两个字。'},
+    {t:'把不会的先空着，回头再做',s:'考试策略',
+     eff:{score:5,mood:2},log:'先做会的，空的回头补上两道。',
+     red:'会做的先拿稳。这是不起眼但永远正确的一件事。',
+     vow:{t:'考完要对比一下错题',tag:'考完：看错题',bonus:{score:3}}}
+   ]},
+
+  {t:'11:30',place:'教室',where:'考完',
+   text:'考完第一科，教室瞬间炸开。阿豆一拍桌子：<b>"最后那道大题你写了吗？我瞎写的！"</b>',
+   opts:[
+    {t:'和他对答案',s:'越对脸越白',
+     eff:{mood:-6,rel:{adou:5}},log:'和阿豆对答案，最后一题两个人一模一样地错了，都傻眼。',
+     red:'一模一样的错误。说明这道题在你们脑子里是空的。'},
+    {t:'一个人趴桌上，先睡五分钟',s:'管他呢',
+     eff:{mood:7,score:-1},log:'趴桌子睡了五分钟，醒来脖子酸。',
+     red:'五分钟的睡眠比焦虑有用。很多人不会这门技能。'},
+    {t:'去找林小满问排名',s:'你很想知道自己多少',
+     eff:{mood:-4,score:1,rel:{xiaoman:4}},log:'去问了班长，知道了大概名次，一路没说话回座位。',
+     red:'名次是个残酷的数字，它让你一整天都知道自己在哪。'}
+   ]},
+
+  {t:'14:00',place:'操场',where:'第二科 · 800 米测试',
+   text:'体育测试，800 米。<b>苏晴在跑道边拉伸，她上次也是这个成绩</b>。体育委员数着人数。',
+   opts:[
+    {t:'认真跑，哪怕跑最后一名',s:'没人记得，但你知道',
+     eff:{mood:4,score:3,rel:{wang:2},flag:'sport'},log:'认真跑了 800 米。是最后一名，但没中途走过。',
+     red:'没有中途走过这件事只有你自己知道。但它会在某个时刻有用。'},
+    {t:'走完全程，保存体力',s:'聪明',
+     eff:{score:-2,mood:1},log:'走完了 800 米。最后一名，而且是走完的。',
+     red:'这一项的分丢了。有些分丢了不会有人告诉你。'},
+    {t:'给苏晴递水，跟她一起拉伸',s:'她一个人站在那',
+     eff:{mood:3,rel:{suqing:9}},log:'递了水，跟她一起拉伸。她说谢谢，说了两次。',
+     red:'有些关系不是在考场上建立的。'},
+    {t:'躲到树后面玩手机',s:'这次没人看见',
+     eff:{mood:5,score:-3,rel:{wang:-5},flag:'cheatTest'},log:'躲到树后面玩了一节课手机。体育委员没报上来。',
+     red:'这次没被抓。运气是一种会花光的资源。'}
+   ]},
+
+  {t:'16:30',place:'走廊',where:'贴分数',
+   text:'月考成绩贴出来了。全班围成一团，都在找自己的名字。班主任在旁边，手里拿着一沓卷子。',
+   say:{who:'wang',expr:'calm',txt:'进步最大的是林小满。退步最大的我私下找他谈。'},
+   opts:[
+    {t:'挤到最前面看自己的分数',s:'怕，也想看',
+     eff:{mood:-5,score:1},log:'挤到最前面，看见了自己的分数，站了一会儿没说话。',
+     red:'站了一会儿。这"一会儿"里，你把自己和分数分开了——这是长大。'},
+    {t:'先去找阿豆，问他多少',s:'反正不是第一个看',
+     eff:{mood:4,rel:{adou:6}},log:'先问了阿豆。他比你高 9 分，恭喜得很真诚，你有点酸。',
+     red:'他恭喜得那么真诚，说明你还没把分数当成敌人。这一点很珍贵。'},
+    {t:'去看林小满怎么考的，去请教',s:'虚心一点',
+     eff:{score:4,mood:1,rel:{xiaoman:9,suqing:3}},log:'去问了林小满错题，她讲得很细，还把笔记借你了。',
+     red:'班长愿意给你讲题，说明她觉得你是自己人。'}
+   ]},
+
+  {t:'18:00',place:'家门口',where:'家',
+   text:'妈妈在门口等你，手里捏着从班主任那拿到的成绩条。',
+   say:{who:'mom',expr:'tired',txt:'你自己说。这次到底多少。'},
+   opts:[
+    {t:'把卷子摊开，一起看错题',s:'可能会被念叨',
+     eff:{score:3,mood:-3,rel:{mom:8}},log:'和妈妈一起看卷子。她念叨了 20 分钟，但教了你两种新方法。',
+     red:'她念叨的每一句，都是因为你还有希望。这句话她没说出来。',
+     vow:{t:'周末要按妈妈教的方法练',tag:'周末：按方法练',bonus:{score:5}}},
+    {t:'先说分数，抢在她开口之前',s:'主动认错',
+     eff:{mood:-2,rel:{mom:6}},log:'主动交代了。妈妈愣了一下，说"诚实比分数重要"。',
+     red:'她愣了一下。她准备了一晚上的台词全废了——这是好事。',
+     vow:{t:'周末要好好整理错题',tag:'周末：整理错题',bonus:{score:5}}},
+    {t:'"成绩条不是发下来了吗，我自己看。"',s:'不想被念',
+     eff:{mood:-1,rel:{mom:-6}},log:'躲进房间了。妈妈在门外站了一会儿。',
+     red:'关上的门不会让分数变低，但会让距离变远。',
+     vow:{t:'周末要主动跟妈妈说说话',tag:'周末：主动说话',bonus:{rel:{mom:6},mood:3}}}
+   ]},
+
+  {t:'19:40',place:'卧室',where:'家 · 周末',
+   text:'周末了。爸爸难得在家，问你：<b>"明天要不要去公园？你妈给你买了新球鞋。"</b>\n书桌上还有一堆没整理的错题。窗外有人在放风筝。',
+   opts:[
+    {t:'去公园！新球鞋要穿出去才划算',s:'开心最重要',
+     eff:{mood:18,score:-1,rel:{dad:9,mom:6}},log:'去了公园，骑车、荡秋千、吃冰淇淋。回家路上一直在笑。',
+     red:'十八分的心情，一分分数。这一笔很划算。',
+     vow:{t:'下周一要精神满满',tag:'下周一：精神满满',bonus:{score:3,mood:4}}},
+    {t:'留在家里，把错题本整理完',s:'周末是用来补课的',
+     eff:{score:10,mood:-7,rel:{dad:-2}},log:'整理错题到 11 点，三小时，整理出 12 道不会的。',
+     red:'三小时换来十二道题。十二道题会跟着你一整年。',
+     vow:{t:'下周一要能讲出这几道题',tag:'下周一：讲得出来',bonus:{score:5}}},
+    {t:'打两小时游戏，然后早点睡',s:'折中',
+     eff:{mood:11,score:-4,rel:{adou:4},flag:'game'},log:'打了两小时游戏，睡前背了 5 个单词。',
+     red:'五个单词是你偷偷塞进去的。这是给自己留的一点点后路。',
+     vow:{t:'下周一要主动交作业',tag:'下周一：主动交作业',bonus:{score:4}}},
+    {t:'和爸妈一起看一部老电影',s:'没什么用，但很暖',
+     eff:{mood:13,rel:{dad:9,mom:9},score:0},log:'和爸妈看了一部老电影，笑得比电影里还开心。',
+     red:'没有分数的选项，有时恰恰是最难得的那一个。',
+     vow:{t:'下周一要主动说说学校的事',tag:'下周一：说说学校',bonus:{rel:{dad:4,mom:4},mood:2}}}
+   ]},
+
+  {t:'22:10',place:'卧室',where:'睡前',
+   text:'关灯了。天花板上有窗外的路灯光，一晃一晃。\n<b>你在想这三天：哪一件是你自己真正想做的？</b>',
+   opts:[
+    {t:'想的是抄小抄那一下',s:'挺爽的',
+     eff:{mood:3,rel:{adou:2},flag:'regretCheat'},log:'躺在床上想的是抄小抄那一下的手感。',
+     red:'那一下的爽是借来的。爽完要还，利息很高。'},
+    {t:'想的是苏晴说的那两声谢谢',s:'挺暖的',
+     eff:{mood:6,rel:{suqing:4}},log:'躺在床上想的是苏晴说了两次谢谢。',
+     red:'有些东西是不能借的。'},
+    {t:'想的是妈妈念叨的那 20 分钟',s:'有点烦，也有点想哭',
+     eff:{mood:5,rel:{mom:5}},log:'躺在床上想的是妈妈念叨的那 20 分钟。',
+     red:'被念叨是有人管你的证据。这句话她没说出来。'},
+    {t:'什么都没想，睡着了',s:'这也很少见',
+     eff:{mood:4,score:1},log:'什么都没想，睡着了。',
+     red:'睡得着是本事。这三天里最难得的一种本事。'},
+    {t:'睡不着，起来把错题看了一遍',s:'凌晨了',
+     eff:{score:4,mood:-3,rel:{mom:-2}},log:'凌晨爬起来把错题看了一遍。',
+     red:'这件事只有你自己知道。但它会一直在。'}
+   ]}
+]}
+];
+
+/* ==========================================================================
+   5. 随机小事
+   ========================================================================== */
+const NOTES=[
+  {t:'<b>小道消息：</b>隔壁班有人把班主任的外套藏进语文书堆，藏了三天，今天被翻出来了。',s:{mood:3},log:'在楼道里听了一路八卦，笑得停不下来。'},
+  {t:'<b>今天有人过生日：</b>苏晴生日，全班在凑钱买礼物，班长挨个问。',s:{mood:1,rel:{xiaoman:2}},log:'凑了 15 块钱买贺卡，写了半晚上。'},
+  {t:'<b>阿豆的橡皮用完了：</b>他把你的橡皮一分为二，说"兄弟一半"。',s:{mood:2,rel:{adou:3},score:-1},log:'橡皮被一分为二，你的那半已经磨没了。'},
+  {t:'<b>体育委员在找人：</b>下周 800 米还缺一个人，没人报名。',s:{},log:'体育委员在黑板上写了个"800"，你看了三秒。'},
+  {t:'<b>你妈在家长群里被表扬了：</b>不是因为你，是因为她做的菜。',s:{mood:5,rel:{mom:4}},log:'看到家长群的消息，默默又吃了两块红烧肉。'},
+  {t:'<b>你的作业本被当成范文：</b>物理作业被收上去在两个班传。',s:{mood:4,score:1,rel:{wang:4}},log:'作业本被当范文传了一圈，作文也被传了。'},
+  {t:'<b>有人在楼道里哭了：</b>是隔壁班的，你假装没看见。',s:{mood:-3},log:'装作没看见走过，但一整天都在想这件事。'},
+  {t:'<b>楼下的野猫：</b>它又躺在花坛上了，今天允许摸。',s:{mood:5},log:'摸了一下猫，手心暖了一下午。'},
+  {t:'<b>班主任表扬了你：</b>虽然只是答对了一道很简单的题。',s:{mood:4,score:1,rel:{wang:3}},log:'被点名表扬了，虽然很简单，还是开心了一整节。'},
+  {t:'<b>你落东西了：</b>水杯落在教室了，明天才能拿。',s:{mood:-2,score:-1},log:'明天要渴一天，早知道带两个。'},
+  {t:'<b>天气预报：</b>明天下雨，你没带伞。',s:{mood:-1,rel:{adou:3}},log:'放学下雨，阿豆把伞分了你一半。'},
+  {t:'<b>你妈今天很累：</b>她一句话都不想说，晚饭只有两个菜。',s:{mood:-2,rel:{mom:-2}},log:'晚饭很安静。你想问她怎么了，又没问出口。'},
+  {t:'<b>校门口在卖盗版笔记本：</b>三块钱一本，什么都有。',s:{mood:3,score:1},log:'买了两本盗版笔记本，写完发现少了两页。'},
+  {t:'<b>你听到老师在办公室说你的名字：</b>后面跟的是"进步很大"。',s:{mood:5,score:1,rel:{wang:2}},log:'无意中听到了那句"进步很大"，一整天都在飘。'}
+];
+
+/* ==========================================================================
+   6. 结局（按三个数 + 行为痕迹判定，顺序即优先级）
+   ========================================================================== */
+const ENDINGS=[
+  {id:'cheat',test:s=>s.flags.cheat>=4&&s.rel.wang<52,grade:'留校察看',
+   t:'被写进小本本的人',
+   red:'红笔评语：这孩子脑子不笨，就是手比脑子快。建议加强自我约束。',
+   body:'你的小抄技术已经发展成了一门手艺。走廊、课桌、纸巾包后面，到处都是你的作品。\n可惜王老师退休前做的最后一件事，就是把你们班的"小抄地图"交到了教导处。名字上了墙，照片贴在公示栏上。你没跟家里说，但那面墙你每天路过都要看很久。\n——你本来不是这个结局。你的分数是被自己的手，一点点抄走的。'},
+
+  {id:'robot',test:s=>s.score>=78&&s.mood<44,grade:'优秀（但是）',
+   t:'只会念书的小机器人',
+   red:'红笔评语：成绩拔尖，可惜眼神有点空。希望知道为什么努力。',
+   body:'你考了全年级最高的分。\n可是这三天，你没有跟任何人说过一句超过十个字的话。阿豆的组队邀请你一直没点开。有一天体育课你一个人在教室坐了整节课，突然不知道自己在努力什么。\n分数会一直涨。但你有点想退出来喘口气。\n——这不是你不好，这是你只有这一样东西。'},
+
+  /* social 放在 top 之后：三项都不错的人应该拿「年级前五」，
+     不该被归进「人好但课一节没听」那一档。 */
+  {id:'top',test:s=>s.score>=76&&s.mood>=56,grade:'优秀',
+   t:'年级前五的那种人',
+   red:'红笔评语：学习刻苦，人也活得挺像个小孩。难得。',
+   body:'你的成绩单很难看——不，是很好看。全年级前五，物理从 38 分到 78 分，作文被当成范文在两个班念过。\n但你也不是只会念书的那个。课间你去操场打了半场球，值日你最后一个走，阿豆生日你悄悄凑了 40 块。\n老师在评语里写：你知道自己在干什么。这句比 100 分都值钱。'},
+
+  {id:'social',test:s=>s.rel.avg>=72&&(s.score<68||s.mood<56),grade:'待观察',
+   t:'班里最会来事的人',
+   red:'红笔评语：人缘好得不像话，成绩嘛……再努力一点。',
+   body:'全班 46 个人，有 41 个人的生日你记得。阿豆把你当兄弟，林小满什么事都跟你讲，连王老师都笑着问"这个我得找你问问"。\n成绩单发下来的时候有点难说出口——你这三天，课上一节课都没听。\n——你把每个人都留住了，唯独没留住自己。'},
+
+  {id:'win',test:s=>s.score>=66&&s.mood>=64&&s.rel.avg>=60,grade:'非常优秀',
+   t:'人生赢家（这三天）',
+   red:'红笔评语：这三天过得不错，继续保持。',
+   body:'分数上去了，心情没垮，班里有一半的人说你是好朋友。\n你周三认真复习，周五还去公园骑了车。三件事你一次都没落下——这才是最难的。\n老师在评语里写：你知道自己在干什么。这句比 100 分都值钱。'},
+
+  {id:'sad',test:s=>s.mood<34&&s.score>=40&&s.score<78,grade:'要关注',
+   t:'有点撑不住的小孩',
+   red:'红笔评语：成绩尚可，但眼神里有东西。建议多聊聊。',
+   body:'分数还行，也没出大事。可这三天你一共只笑了 4 次。\n你开始躲着人走，一个人在楼梯间待着，连阿豆喊你都装作没听见。\n有一天班主任在办公室门口叫住你："你最近不太对，是不是有什么事？"你张了张嘴，说"没事"。\n那一刻你很想哭。这就是需要说出来的时候。'},
+
+  {id:'lonely',test:s=>s.rel.avg<40,grade:'需要关注',
+   t:'一个人也没留下',
+   red:'红笔评语：建议多参与集体活动。',
+   body:'分数不高也不低，但班里没人记得你。\n你溜过值日，你拒绝了阿豆，你没有帮苏晴搬作业本，你在食堂看见林小满一个人在角落，转头走了。\n每一件都不是大事。但三天下来，你的位置已经挪不回去了。\n——下周一，阿豆过生日。他昨天在群里问"谁记得我生日"，没有一个人回。'},
+
+  {id:'fail',test:s=>s.score<48,grade:'需要努力',
+   t:'掉队的那个',
+   red:'红笔评语：知识上有很多空白，需要从头补。不算晚。',
+   body:'月考 41 分，倒数第五。\n最难受的不是分数，是你看不懂卷子上那些别人都会的题。上课老师提问，你死死盯着本子，希望她叫不到你。回家妈妈问你，你说"我困了"。\n但有一个转机：你把想问的题都记在一个小本子上了，一共 17 道。\n下周，去问苏晴。她今天说了两次谢谢。'},
+
+  {id:'ok',test:s=>true,grade:'良好',
+   t:'普普通通的初二生',
+   red:'红笔评语：不功不过，稳稳当当。',
+   body:'这三天就这样过去了。分数上去了，也掉了一点；交了一个新朋友，也错过了一个生日。\n没有逆袭，没有掉队。你就是初二(3)班 46 个人里普普通通的一个。\n——大部分日子本来就是这样。但你把每一道题都答完了，包括那道没把握的。'}
+];
+
+/* ==========================================================================
+   7. 引擎
+   ========================================================================== */
+const S={day:0,i:0,score:60,mood:56,rel:{adou:55,xiaoman:50,suqing:48,wang:50,mom:58,dad:55},
+         flags:{},log:[],note:null,attn:0,vow:null,vowDay:-1,done:false,undone:null,logOpen:false};
+const KEY=['A','B','C','D','E'];
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const pickRand=a=>a[Math.floor(Math.random()*a.length)];
+/* 注意：好感可能正好是 0，0 在 JS 里是假值 —— 必须用 ?? 而不是 ||，
+   否则好感掉到 0 后，下一个碰到它的选项会把它错误地重置回 50。 */
+const gv=k=>(S.rel[k]??50);
+const relAvg=()=>Math.round(REL_KEYS.reduce((s,n)=>s+gv(n),0)/REL_KEYS.length);
+function hearts(v){const n=v>=82?5:v>=66?4:v>=50?3:v>=34?2:v>=18?1:0;return '♥'.repeat(n)+'♡'.repeat(5-n);}
+
+/* 手绘感进度条 */
+function bar(v,color){
+  const w=Math.max(0,Math.min(100,v)), half=(w/2).toFixed(1);
+  return `<svg viewBox="0 0 100 12" preserveAspectRatio="none">
+    <path d="M1 6 q24 -3.5 49 0 t49 0" fill="none" stroke="rgba(58,56,48,.3)" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M1 6 q${(w*0.25).toFixed(1)} -3.2 ${half} 0 t${half} 0" fill="none"
+      stroke="${color}" stroke-width="5" stroke-linecap="round"/>
+  </svg>`;
+}
+
+/* 阻尼：越接近上限越难涨（60→0.87，80→0.50，90→0.37）；减分永远全额生效。
+   末端压得更狠，保证没有"全选学习"就能顶到 100 的路线。 */
+function dim(cur){return .20+.80*(94-cur)/78;}
+function applyEff(eff){
+  const b={score:S.score,mood:S.mood,rel:{...S.rel}};
+  if(eff.score>0){
+    let g=Math.max(1,Math.round(eff.score*dim(S.score)));
+    if(S.score>=88) g=Math.min(g,eff.score>=8?2:1);   /* 88 分以上几乎不再涨 */
+    S.score=clamp(S.score+g,0,100);
+  }
+  if(eff.score<0) S.score=clamp(S.score+eff.score,0,100);
+  if(eff.mood>0)  S.mood =clamp(S.mood +Math.max(1,Math.round(eff.mood*dim(S.mood)/1.7)),0,100);
+  if(eff.mood<0)  S.mood =clamp(S.mood +eff.mood,0,100);
+  if(eff.rel) for(const k in eff.rel) S.rel[k]=clamp((S.rel[k]??50)+eff.rel[k],0,100);
+  if(eff.attn) S.attn+=eff.attn;
+  const out={score:S.score-b.score,mood:S.mood-b.mood,rel:{}};
+  for(const k in S.rel) if(S.rel[k]!==b[k]) out.rel[k]=S.rel[k]-b[k];
+  return out;
+}
+const curScene=()=>DAYS[S.day].scenes[Math.min(S.i,DAYS[S.day].scenes.length-1)];
+const qno=()=>`第 ${S.i+1} 题 / 共 ${DAYS[S.day].scenes.length} 题`;
+
+/* ---------- 渲染 ---------- */
+function renderHead(){
+  const d=DAYS[S.day];
+  return `<div class="head">
+    <div class="h-title">${d.title}</div>
+    <div class="h-sub">初二(3)班 · ${d.sub}</div>
+    <div class="h-row">
+      <div class="daystamp">${DAYS.slice(0,S.day+1).map(x=>x.title).join(' · ')}</div>
+      <div class="wk">${qno()}</div>
+    </div>
+  </div>
+  <div class="stats">
+    ${stat('分数',S.score,'var(--blue)','从 60 出发')}
+    ${stat('心情',S.mood,'var(--gold)','低了会学不进')}
+    ${stat('人际关系',relAvg(),'var(--green)','学校里这四个人')}
+  </div>
+  <div class="friends">${REL_KEYS.map(k=>`
+    <div class="fr">
+      <span class="av">${faceHTML(CHARS[k].face,28)}</span>
+      <span class="nm">${CHARS[k].n}</span>
+      <span class="ht" style="color:${S.rel[k]>=66?'#D33F2E':S.rel[k]>=42?'#C08A18':'#6B675C'}">${hearts(S.rel[k])}</span>
+    </div>`).join('')}</div>`;
+}
+function stat(label,v,color,hint){
+  return `<div class="stat">
+    <div class="lab">${label}<em>${v}</em></div>
+    <div class="bar">${bar(v,color)}</div>
+    <div class="hint">${hint}</div>
+  </div>`;
+}
+function logHTML(){
+  if(!S.log.length) return '';
+  /* 记住日志框的展开状态：重绘时如果无脑回到收起，页面高度突变会带着视口跳一下 */
+  return `<div class="logbox">
+    <div class="log-h" onclick="togLog()">✎ 我的草稿记录 <span style="margin-left:auto" id="lgA">${S.logOpen?'▴':'▾'}</span></div>
+    <div class="log-b${S.logOpen?' on':''}" id="logB">${S.log.slice().reverse().map(l=>
+      `<div class="lg"><span class="tm">${l.tm}</span>${l.tx}</div>`).join('')}</div>
+  </div>`;
+}
+function togLog(){
+  const b=$('logB'); if(!b) return;
+  b.classList.toggle('on');
+  S.logOpen=b.classList.contains('on');
+  $('lgA').textContent=S.logOpen?'▴':'▾';
+}
+
+function render(){
+  const sc=curScene();
+  const sayHTML=sc.say?`<div class="say">
+      <div class="av">${faceHTML(Object.assign({},CHARS[sc.say.who].face,{expr:sc.say.expr||'calm',pose:sc.say.pose||CHARS[sc.say.who].face.pose}),40)}</div>
+      <div><div class="who">${CHARS[sc.say.who].n}</div>
+      <div class="bubble"><div class="txt">${sc.say.txt}</div></div></div></div>`:'';
+  const vowHTML=(sc.vowNote&&S.vow&&S.vowDay<S.day)
+    ? `<div class="vow"><div class="vh">你昨晚对自己说的话</div>
+       <div class="vt">「${S.vow.t}」<span class="badge">${S.vow.tag}</span></div></div>`:'';
+  const noteHTML=S.note?`<div class="sticky${S.note.vio?' vio':''}">${S.note.t}</div>`:'';
+
+  $('app').innerHTML=renderHead()+`
+    <div class="q">
+      <div class="q-no">${qno()}</div>
+      <div class="q-head">
+        <span class="q-time">${sc.t}</span>
+        <span class="q-place">${sc.place}</span>
+        <span class="q-where">${sc.where}</span>
+      </div>
+      <div class="q-text">${sc.text}</div>
+      ${sayHTML}${vowHTML}${noteHTML}
+      <div class="ans">${sc.opts.map((o,i)=>`
+        <button class="opt" data-i="${i}">
+          <span class="k">${KEY[i]}</span>
+          <span class="tx">${o.t}<small>${o.s}</small></span>
+          <span class="mk">✓</span>
+        </button>`).join('')}</div>
+      <div id="markSlot"></div>
+    </div>
+    ${logHTML()}`;
+  document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(+b.dataset.i));
+}
+
+/* ---------- 答题 + 红笔批改 ---------- */
+function answer(i){
+  if(S.done) return;
+  const sc=curScene(), o=sc.opts[i];
+  if(!o) return;
+
+  const d=applyEff(o.eff||{});
+  /* flag 写在选项上或 eff 里都认 */
+  const fl=o.flag||(o.eff&&o.eff.flag);
+  if(fl) S.flags[fl]=(S.flags[fl]||0)+1;
+  pushLog(sc.t,o.log);
+
+  // 作弊被逮（概率随 attn 上升）
+  if(o.gate==='cheat'&&Math.random()<.30+S.attn*.10){
+    S.note={vio:true,t:'<b>！！被逮到了：</b>'+pickRand([
+      '你抄到一半，身后有人咳了一声——班主任站在你背后，站了很久。',
+      '小纸片被风吹到了地上，正好落在巡查的教导主任脚边。',
+      '你抬头的时候，监考老师正看着你。你们对视了整整两秒。',
+      '走廊尽头传来一句"你们几个，过来一下"。'
+    ])+' 小抄被没收了，名字也记住了。'};
+    const pd=applyEff({mood:-9,rel:{wang:-16}});
+    d.mood+=pd.mood; d.rel.wang=(d.rel.wang||0)+pd.rel.wang;
+    pushLog(sc.t,'<span class="r">（被逮到：王老师 -16，心情 -9）</span>');
+  } else S.note=null;
+
+  // 随机小事
+  if(Math.random()<.3&&!S.note){
+    const n=pickRand(NOTES);
+    const nd=applyEff(n.s||{});
+    d.score+=nd.score; d.mood+=nd.mood;
+    for(const k in nd.rel) d.rel[k]=(d.rel[k]||0)+nd.rel[k];
+    S.note={t:n.t};
+    pushLog(sc.t,n.log);
+  }
+
+  // 睡前承诺
+  if(o.vow){S.vow=o.vow;S.vowDay=S.day;S.flags.vowed=(S.flags.vowed||0)+1;}
+
+  showMark(o.red,d);
+  document.querySelectorAll('.opt').forEach((b,bi)=>{
+    b.classList.add('lock');
+    if(bi===i){b.classList.add('picked');}
+    else{
+      b.classList.add('wrong');
+      b.insertAdjacentHTML('beforeend',
+        '<span class="cross"><svg viewBox="0 0 200 26" preserveAspectRatio="none">'+
+        '<path d="M4 9 q40 11 92 5 t100 -3"/></svg></span>');
+    }
+  });
+  /* 刻意不滚动：任何自动滚动都会让"点一下动一下"，比不滚更烦。
+     批改块紧跟在选项下面，用户的眼睛本来就在那儿。 */
+}
+function pushLog(tm,tx){S.log.push({tm,tx});}
+
+function showMark(red,d){
+  const items=[];
+  if(d.score) items.push(`<span class="${d.score>0?'d-up':'d-dn'}">分数 ${d.score>0?'+':''}${d.score}</span>`);
+  if(d.mood)  items.push(`<span class="${d.mood>0?'d-up':'d-dn'}">心情 ${d.mood>0?'+':''}${d.mood}</span>`);
+  for(const k in d.rel){
+    if(!d.rel[k]) continue;
+    const who=CHARS[k]?CHARS[k].n:k;
+    items.push(`<span class="${d.rel[k]>0?'d-up':'d-dn'}">${who} ${d.rel[k]>0?'+':''}${d.rel[k]}</span>`);
+  }
+  if(!items.length) items.push('<span class="d-0">这一下什么也没变</span>');
+  $('markSlot').innerHTML=`<div class="mark">
+    <div class="stamp">批 改</div>
+    <div class="cmt">${red}</div>
+    <div class="dlt">${items.join('')}</div>
+    <button class="btn-next" id="btnNext" onclick="nextQ()">下一题 ↓</button>
+  </div>`;
+}
+
+/* ---------- 下一题 ---------- */
+function nextQ(){
+  S.note=null;
+  S.i++;
+  const newQ=true;
+  if(S.i>=DAYS[S.day].scenes.length){
+    S.day++; S.i=0;
+    if(S.day>=DAYS.length){
+      S.done=true;
+      // 最后一个承诺没来得及兑现 —— 如实写进成绩单
+      if(S.vow) S.undone=S.vow;
+      return report();
+    }
+    // 兑现昨晚的承诺
+    if(S.vow&&S.vow.bonus){
+      applyEff(S.vow.bonus);
+      S.note={t:'<b>你说到做到了：</b>「'+S.vow.t+'」。今天早上出门的时候，你真的照做了。'};
+      pushLog('清晨','兑现了昨晚对自己的承诺：'+S.vow.t);
+    }
+  }
+  keepQPos(render);
+}
+
+/* 记住 / 还原「题目块在屏幕上的位置」。
+   换题时旧的批改块消失、页面变短，浏览器会把滚动位置夹回去造成跳动。
+   只要让题目块回到原来的屏幕位置，视觉上就是原地换内容，完全不晃。
+   注意：必须在动画播完之后再量位置，否则量到动画中途的错位，补滚之后动画结束内容又挪回去。 */
+function keepQPos(fn){
+  const q=document.querySelector('.q');
+  const before=q?q.getBoundingClientRect().top:0;
+  const done=()=>{
+    const q2=document.querySelector('.q');
+    if(!q2) return;
+    const delta=q2.getBoundingClientRect().top-before;
+    if(Math.abs(delta)>1&&window.pageYOffset+delta>0) window.scrollTo(0,window.pageYOffset+delta);
+  };
+  fn();
+  /* 等一帧让布局稳定、再等动画播完，然后才补滚 */
+  if(typeof requestAnimationFrame==='function'){
+    requestAnimationFrame(()=>requestAnimationFrame(done));
+  } else setTimeout(done,40);
+}
+
+/* ---------- 结算成绩单 ---------- */
+function rankOf(){
+  const sc=S.score;
+  if(sc>=88) return '年级前 20 名';
+  if(sc>=80) return '年级前 80 名';
+  if(sc>=72) return '年级前 200 名';
+  if(sc>=64) return '年级前 400 名';
+  if(sc>=55) return '年级中下游';
+  return '班级后 1/3';
+}
+function report(){
+  const s={score:S.score,mood:S.mood,rel:{...S.rel,avg:relAvg()},flags:S.flags};
+  const e=ENDINGS.find(x=>x.test(s))||ENDINGS[ENDINGS.length-1];
+  const bars=[['分数',s.score,'var(--blue)'],['心情',s.mood,'var(--gold)'],['人际关系',s.rel.avg,'var(--green)']];
+
+  const ach=[];
+  const F=[['cheat','抄小抄'],['game','打游戏'],['late','熬夜'],['absent','缺考'],
+           ['lie','撒谎'],['hwcopy','抄作业'],['flee','溜值日'],['sport','认真跑步'],
+           ['confess','跟老师说实话'],['regretCheat','睡前想起小抄'],['vowed','对自己许过诺']];
+  F.forEach(([k,n])=>{if(s.flags[k])ach.push(n+' ×'+s.flags[k]);});
+
+  const people=REL_KEYS.concat(['mom','dad']).map(k=>{
+    const v=gv(k), nm=CHARS[k].n;
+    const w=v>=78?'亲近':v>=58?'还行':v>=40?'一般':'疏远';
+    return `${nm}：${w}（${hearts(v)}）`;
+  });
+
+  const ov=document.createElement('div');
+  ov.className='over';
+  ov.innerHTML=`<div class="report">
+    <div class="grade-big">${e.grade}</div>
+    <div class="rp-k">初 二(3) 班 · 期 中 成 绩 单</div>
+    <div class="rp-t">${e.t}</div>
+    <div class="rp-line">${e.red}</div>
+
+    <div class="rp-card">
+      <h4>▎三个数</h4>
+      <div class="rp-bars">${bars.map(b=>`
+        <div class="rpb"><span class="nm">${b[0]}</span>
+        <span class="bar">${bar(b[1],b[2])}</span><span class="vl">${b[1]}</span></div>`).join('')}</div>
+      <div class="rank">${rankOf()}<br>${people.join('　')}</div>
+    </div>
+
+    <div class="rp-card">
+      <h4>▎这三天你干了什么</h4>
+      <p>${ach.length?ach.join('、')+'。':'这三天很干净，什么出格的事都没干。'}</p>
+    </div>
+
+    ${S.undone?`<div class="rp-card">
+      <h4>▎你留给下周一的话</h4>
+      <p>「${S.undone.t}」<br><span style="color:var(--pen-2);font-size:15px">这句话还没来得及兑现。三天到这里就结束了——下周一早上，你打算照做吗？</span></p>
+    </div>`:''}
+
+    <div class="rp-card">
+      <h4>▎老师想对你说</h4>
+      <p>${e.body}</p>
+    </div>
+
+    <div class="acts">
+      <button class="big" onclick="location.reload()">再玩一次（换个身份）</button>
+      <button class="big alt2" onclick="showLog()">看看我这三天写了什么</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('.alt2').onclick=showLog;
+}
+function showLog(){
+  const old=document.querySelector('.over'); if(old) old.remove();
+  const ov=document.createElement('div');
+  ov.className='over';
+  ov.innerHTML=`<div class="report">
+    <div class="rp-k">我 的 草 稿 记 录</div>
+    <div class="rp-t">这 三 天</div>
+    <div class="rp-card" style="margin-top:14px"><p>${S.log.map(l=>
+      `<span class="lg"><span class="tm">${l.tm}</span>${l.tx}</span>`).join('<br>')}</p></div>
+    <div class="acts"><button class="big alt" onclick="document.querySelector('.over').remove()">关上</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+/* ==========================================================================
+   8. 开场
+   ========================================================================== */
+function intro(){
+  $('app').innerHTML=`<div class="intro">
+    <h2>草稿纸人生</h2>
+    <div class="ct">初二(3)班 · 46 个人里的一个 · 一张草稿纸上的三天</div>
+    <div class="paper-note">
+      <div class="r"><i>①</i><span>这三天，你要在<b>学校</b>和<b>家</b>之间来回。每天八九件事：早读、上课、课间、午饭、值日、晚饭、睡前……</span></div>
+      <div class="r"><i>②</i><span>每件事都是一道<b>题</b>，你在草稿纸上选一个答案。选完就<b>不能改了</b>——别的选项会被红笔划掉。</span></div>
+      <div class="r"><i>③</i><span>会抄小抄、会打两小时游戏、会在老师眼皮底下装认真。<b>选哪个都行，后果都不一样。</b></span></div>
+      <div class="r"><i>④</i><span>只有三个数：<b>分数</b>（从 60 出发）、<b>心情</b>、<b>人际关系</b>。分数最高的人不一定是最好的结局。</span></div>
+      <div class="r"><i>⑤</i><span>最后你会拿到一张成绩单。上面有红笔写的评语，和一个你想不到的名字。</span></div>
+    </div>
+    <p style="font-size:17px;margin:6px 0 10px">先定个身份 —— 你是初二(3)班的哪一个？</p>
+    <div class="ans" style="border-style:solid">${STARTS.map((s,i)=>`
+      <button class="opt" data-i="${i}">
+        <span class="k">${s.k}</span>
+        <span class="tx">${s.t}<small>${s.s} · 初始分数 ${s.score}</small></span>
+        <span class="mk"></span>
+      </button>`).join('')}</div>
+    <p class="tip">点一个开始 · 手机和电脑都能玩 · 建议用耳机（没有声音）</p>
+  </div>`;
+  document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const st=STARTS[+b.dataset.i];
+    S.score=st.score;S.mood=st.mood;S.rel=Object.assign(S.rel,st.rel);
+    pushLog('开始','我是'+st.t+'，带着 <b>'+S.score+'</b> 分走进初二(3)班。');
+    keepQPos(render);
+  });
+}
+intro();
+</script>
+</body>
+</html>
